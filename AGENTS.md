@@ -54,6 +54,6 @@ Verify claims from the thing itself. A result is read from the file on disk, the
 
 ## Repo annex
 
-Corked judges the code. Bluepencil, owned by the Retrospective Line chat, judges the instructions. Corked never edits a rules file and bluepencil never reviews a diff.
+Stickler judges the code. Bluepencil, owned by the Retrospective Line chat, judges the instructions. Stickler never edits a rules file and bluepencil never reviews a diff.
 
 The local gate is python3 scripts/codepoint_scan.py and python3 -m pytest tests -q, and the suite runs offline against recorded model output or the operator's existing session tooling, with no new paid keys. Every fixture is synthetic and written for this repo.

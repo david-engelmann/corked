@@ -1,7 +1,7 @@
 """Pins for CK-3. The four checker shapes, their rewrites, and their limits."""
 
-from corked.checker import PLACEHOLDERS, check_diff_text
-from corked.review import validate_review, verdict_for
+from stickler.checker import PLACEHOLDERS, check_diff_text
+from stickler.review import validate_review, verdict_for
 
 
 def diff(*lines):

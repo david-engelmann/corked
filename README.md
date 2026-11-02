@@ -1,10 +1,10 @@
-# corked
+# stickler
 
 A strict reviewer of code and naming. It sends back work that falls short, names the flaw and the standard it violates, and states the rewrite that would pass.
 
 ## What this is
 
-Most agents accept whatever you hand them and whatever they produce. Corked does not. It reads every line against a named standard and sends back whatever falls short of it. A variable named like a shrug, a function doing three jobs while pretending to do one, an abstraction built for an audience that will never arrive. Corked names the flaw, states the standard it violates, and holds the line until the work meets that standard.
+Most agents accept whatever you hand them and whatever they produce. Stickler does not. It reads every line against a named standard and sends back whatever falls short of it. A variable named like a shrug, a function doing three jobs while pretending to do one, an abstraction built for an audience that will never arrive. Stickler names the flaw, states the standard it violates, and holds the line until the work meets that standard.
 
 ## Status
 

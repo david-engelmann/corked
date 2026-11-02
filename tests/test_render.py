@@ -3,8 +3,8 @@
 import json
 import pathlib
 
-from corked.changeset import check_changeset
-from corked.render import render_review, render_set_defects, render_set_review
+from stickler.changeset import check_changeset
+from stickler.render import render_review, render_set_defects, render_set_review
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 

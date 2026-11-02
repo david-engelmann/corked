@@ -1,13 +1,13 @@
-# corked roadmap
+# stickler roadmap
 
 The contract holds what is built. This file holds what is planned,
 in the order the programme intends to build it. Nothing here is
 claimed as met anywhere in the README programme status until a
 round closes on it.
 
-## Decision models in corked
+## Decision models in stickler
 
-Corked's shapes are deterministic, and most lines they meet are
+Stickler's shapes are deterministic, and most lines they meet are
 settled by the shapes alone. The honest seat for judgment is the
 borderline verdict, a line the deterministic checker flags as
 unsettled because the pattern sits between two readings and no
@@ -24,7 +24,7 @@ widens beyond Jev.
 Where judgment enters is the verdict on a flagged borderline line
 and nowhere else. The call presents the line, its diff context in
 stated summary form, and the shape readings the checker already
-computed, and asks the model to choose between the labels corked
+computed, and asks the model to choose between the labels stickler
 and clean. A verdict below a confidence the contract will state is
 an abstention, and an abstained line is reported as unjudged, never
 silently clean, with the unjudged count standing in the review
@@ -47,7 +47,7 @@ envelope holding the model name, the decision with its choice,
 confidence, and probabilities, and the token usage, and that
 envelope is what a fixture records. The suite replays recorded
 verdicts through the same adapter the live slice uses, covering a
-corked verdict, a clean verdict, and an abstention, so the
+stickler verdict, a clean verdict, and an abstention, so the
 borderline path is exercised with no live call in the gate. Live
 calls happen only inside a gated live slice whose recordings then
 join the fixtures.

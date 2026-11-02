@@ -1,4 +1,4 @@
-"""The corked command line. Three commands, check, render, and review."""
+"""The stickler command line. Three commands, check, render, and review."""
 
 import json
 import pathlib
@@ -84,9 +84,9 @@ def main(argv=None):
         return _render(args[1])
     if len(args) == 2 and args[0] == "review":
         return _review(args[1])
-    print("Usage, corked check DIFF_FILE", file=sys.stderr)
-    print("Usage, corked render REVIEW_JSON", file=sys.stderr)
-    print("Usage, corked review SET_JSON", file=sys.stderr)
+    print("Usage, stickler check DIFF_FILE", file=sys.stderr)
+    print("Usage, stickler render REVIEW_JSON", file=sys.stderr)
+    print("Usage, stickler review SET_JSON", file=sys.stderr)
     return 2
 
 

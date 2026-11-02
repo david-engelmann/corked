@@ -1,6 +1,6 @@
 """Pins for CK-6. The change set loader and the set check."""
 
-from corked.changeset import check_changeset, load_changeset
+from stickler.changeset import check_changeset, load_changeset
 
 
 def entry(name, *added_lines):

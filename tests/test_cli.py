@@ -3,7 +3,7 @@
 import json
 import pathlib
 
-from corked.cli import main
+from stickler.cli import main
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
