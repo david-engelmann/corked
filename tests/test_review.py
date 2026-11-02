@@ -1,6 +1,6 @@
 """Pins for CK-1 and CK-2. The verdict rule and the completeness rule."""
 
-from corked.review import validate_review, verdict_for
+from stickler.review import validate_review, verdict_for
 
 COMPLETE = {
     "flaw": "The name says nothing about what the value holds",
