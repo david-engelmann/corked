@@ -90,7 +90,7 @@ def test_each_blank_text_field_is_named():
 
 
 def test_unknown_category_is_named():
-    objection = dict(COMPLETE, category="taste")
+    objection = dict(COMPLETE, category="style")
     assert validate_review(review([objection])) == [
         "objections[0].category must be one of naming, structure, smell"
     ]

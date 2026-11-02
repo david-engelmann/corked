@@ -1,10 +1,10 @@
 # corked
 
-An agent with taste. It refuses ugly code the way a sommelier refuses corked wine, and it tells you exactly why your naming is beneath you.
+A strict reviewer of code and naming. It sends back work that falls short, names the flaw and the standard it violates, and states the rewrite that would pass.
 
 ## What this is
 
-Most agents accept whatever you hand them and whatever they produce. Corked does not. It reads code the way a sommelier reads a wine list, and it sends back what is off. A variable named like a shrug, a function doing three jobs while pretending to do one, an abstraction built for an audience that will never arrive. Corked names the flaw, explains the standard it violates, and holds the line until the work is worthy of the cellar.
+Most agents accept whatever you hand them and whatever they produce. Corked does not. It reads every line against a named standard and sends back whatever falls short of it. A variable named like a shrug, a function doing three jobs while pretending to do one, an abstraction built for an audience that will never arrive. Corked names the flaw, states the standard it violates, and holds the line until the work meets that standard.
 
 ## Status
 
@@ -15,7 +15,7 @@ Seeded in October 2026. Setup has landed, and Rounds 1 and 2 have closed, with b
 - Closed perfection rounds, 2 of 100. A round counts only when a full cycle of work, audit, review, red team, and approval has closed. Seeding and setup are not rounds.
 - Contract, SETUP-1 to SETUP-4 and CK-1 to CK-6 met. CK-1 to CK-4 stand in full form in CONTRACT.md with the Round 1 repair amendments, and Round 1 closed on the merged slice 2 after three reviews, a repair pass, and an approving re-review.
 - Contract, CK-5 and CK-6 met. They stand in full form in CONTRACT.md with the Round 2 repair amendments, and Round 2 closed on the merged slice 3 after three reviews, a repair pass, and an approving re-review.
-- Slice 2 has landed. It carries the review core, the built in checker with its four named shapes, the shared rendering, and the check and render commands, all running offline on recorded or local input. The first slice is a taste review of one diff, objections named with the rewrite each one would accept.
+- Slice 2 has landed. It carries the review core, the built in checker with its four named shapes, the shared rendering, and the check and render commands, all running offline on recorded or local input. The first slice is a strict review of one diff against named standards, objections named with the rewrite each one would accept.
 - Slice 3 has landed. It carries the two remaining definition time shapes, the call default and the class attribute with its class context read from the diff itself, and the set level review with the review command, over one synthetic change set under examples.
 - Local gate, python3 scripts/codepoint_scan.py and python3 -m pytest tests -q. CI runs the same commands.
 
