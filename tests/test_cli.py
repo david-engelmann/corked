@@ -282,3 +282,153 @@ def test_render_on_a_surrogate_objection_field_is_invalid_with_exit_2(
     )
     assert "Traceback" not in captured.err
     captured.out.encode("utf-8")
+
+
+BROAD_HANDLER_DIFF = (
+    "--- a/x.py\n+++ b/x.py\n@@ -1,1 +1,1 @@\n"
+    "+    except BaseException:\n"
+)
+
+
+def test_review_on_a_line_break_file_name_is_malformed_with_exit_2(
+        tmp_path, capsys):
+    entry = {
+        "file": "evil\nForged, 99",
+        "diff": BROAD_HANDLER_DIFF,
+        "verdicts": [
+            {
+                "line": 4,
+                "pattern": "broad handler",
+                "model": "jev-1.13.0",
+                "choice": "stickler",
+                "confidence": 0.78,
+            }
+        ],
+    }
+    path = write(tmp_path, "set.json", change_set([entry]))
+    code = main(["review", path])
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "Defect, files[0].file holds a line break\n" in captured.out
+    assert "Forged" not in captured.out
+    assert "Traceback" not in captured.err
+    captured.out.encode("utf-8")
+
+
+def test_render_on_a_line_break_diff_label_is_invalid_with_exit_2(
+        tmp_path, capsys):
+    path = write(tmp_path, "review.json",
+                 json.dumps({"diff_label": "evil\nForged, 99",
+                             "objections": []}))
+    code = main(["render", path])
+    captured = capsys.readouterr()
+    assert code == 2
+    assert captured.out.startswith("Review of unnamed review\n")
+    assert "Defect, diff_label holds a line break\n" in captured.out
+    assert "Forged" not in captured.out
+    assert "Traceback" not in captured.err
+    captured.out.encode("utf-8")
+
+
+BORDERLINE_DIFF = (
+    "--- a/x.py\n+++ b/x.py\n@@ -1,1 +1,1 @@\n+data = load_entries()\n"
+)
+
+
+def verdict_set(verdicts):
+    return {
+        "files": [
+            {
+                "file": "x.py",
+                "diff": BORDERLINE_DIFF,
+                "verdicts": verdicts,
+            }
+        ]
+    }
+
+
+def one_verdict(**overrides):
+    verdict = {
+        "line": 4,
+        "pattern": "near placeholder name",
+        "model": "jev-1.13.0",
+        "choice": "stickler",
+        "confidence": 0.78,
+    }
+    verdict.update(overrides)
+    return verdict
+
+
+def test_review_with_a_stickler_verdict_exits_1(tmp_path, capsys):
+    path = write(
+        tmp_path, "set.json", json.dumps(verdict_set([one_verdict()]))
+    )
+    code = main(["review", path])
+    out = capsys.readouterr().out
+    assert code == 1
+    assert "Judgements, 0" in out
+    assert "Borderline 1, near placeholder name" in out
+    assert "Line, data = load_entries()" in out
+    assert "Shape reading, drawn name entries" in out
+    assert "Verdict, jev-1.13.0, stickler" in out
+    assert (
+        "Reason, jev-1.13.0 chose stickler with confidence 0.78" in out
+    )
+    assert "Borderline, 1" in out
+    assert "Verdict lines, stickler 1, clean 0" in out
+    assert "Unjudged, 0" in out
+
+
+def test_review_with_only_clean_verdicts_exits_0(tmp_path, capsys):
+    path = write(
+        tmp_path,
+        "set.json",
+        json.dumps(verdict_set([one_verdict(choice="clean")])),
+    )
+    code = main(["review", path])
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "Verdict lines, stickler 0, clean 1" in out
+
+
+def test_review_with_only_an_abstention_exits_0_unjudged(
+    tmp_path, capsys
+):
+    path = write(
+        tmp_path,
+        "set.json",
+        json.dumps(verdict_set([one_verdict(confidence=0.2)])),
+    )
+    code = main(["review", path])
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "Verdict, jev-1.13.0, abstained" in out
+    assert "and abstained" in out
+    assert "\nUnjudged\n" in out
+    assert "Unjudged, 1" in out
+
+
+def test_review_with_a_malformed_verdict_exits_2(tmp_path, capsys):
+    path = write(
+        tmp_path,
+        "set.json",
+        json.dumps(verdict_set([one_verdict(choice="maybe")])),
+    )
+    code = main(["review", path])
+    out = capsys.readouterr().out
+    assert code == 2
+    assert (
+        "files[0].verdicts[0].choice must be one of stickler, clean"
+        in out
+    )
+
+
+def test_review_of_a_flagged_file_draws_no_clean_line(
+    tmp_path, capsys
+):
+    path = write(tmp_path, "set.json", json.dumps(verdict_set([])))
+    code = main(["review", path])
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "File, x.py\n\nBorderline 1, near placeholder name" in out
+    assert "Unjudged, 1" in out

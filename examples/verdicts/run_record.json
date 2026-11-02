@@ -1,0 +1,23 @@
+{
+  "routes": [
+    {
+      "model": "jev-1.13.0",
+      "calls_attempted": 12,
+      "verdicts_recorded": 12,
+      "calls_failed": 0,
+      "abstentions": 2,
+      "input_tokens": 5828,
+      "output_tokens": 420
+    },
+    {
+      "model": "openai/gpt-6-luna",
+      "calls_attempted": 12,
+      "verdicts_recorded": 10,
+      "calls_failed": 2,
+      "abstentions": 0,
+      "input_tokens": 2045,
+      "output_tokens": 918,
+      "cost_dollars": "0.0006635"
+    }
+  ]
+}

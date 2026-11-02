@@ -63,6 +63,16 @@ def test_a_review_whose_label_holds_a_surrogate_renders_unnamed():
     rendered.encode("utf-8")
 
 
+def test_a_review_whose_label_holds_a_line_break_renders_unnamed():
+    review = {"diff_label": "evil\nForged, 99", "objections": []}
+    rendered = render_review(review)
+    assert rendered.startswith("Review of unnamed review\n")
+    assert "Verdict, invalid\n" in rendered
+    assert "Defect, diff_label holds a line break\n" in rendered
+    assert "Forged" not in rendered
+    rendered.encode("utf-8")
+
+
 def test_recorded_review_matches_its_golden_rendering():
     recorded = json.loads(
         (ROOT / "examples" / "recorded_review.json").read_text(encoding="utf-8")

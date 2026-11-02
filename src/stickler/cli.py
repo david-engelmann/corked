@@ -4,7 +4,7 @@ import json
 import pathlib
 import sys
 
-from .changeset import check_changeset, load_changeset
+from .changeset import load_changeset, review_changeset
 from .checker import check_diff_text
 from .render import (
     render_defects,
@@ -13,6 +13,7 @@ from .render import (
     render_set_review,
 )
 from .review import verdict_for
+from .verdicts import line_outcome
 
 _EXIT_CODES = {"accepted": 0, "sent back": 1, "invalid": 2}
 
@@ -70,9 +71,15 @@ def _review(path):
     if defects:
         print(render_set_defects(defects), end="")
         return 2
-    results = check_changeset(value)
+    results = review_changeset(value)
     print(render_set_review(results), end="")
-    return 1 if any(judgements for _name, judgements in results) else 0
+    if any(judgements for _name, judgements, _blocks in results):
+        return 1
+    for _name, _judgements, blocks in results:
+        for block in blocks:
+            if line_outcome(block["verdicts"]) == "stickler":
+                return 1
+    return 0
 
 
 def main(argv=None):
