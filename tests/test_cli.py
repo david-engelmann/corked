@@ -197,6 +197,28 @@ def test_review_on_a_set_with_a_loader_defect_exits_2_and_names_it(
     assert "Defect, files[0].diff is missing\n" in out
 
 
+def test_review_on_an_oversized_integer_confidence_exits_2_without_a_traceback(
+        tmp_path, capsys):
+    verdict = {
+        "line": 4,
+        "pattern": "near placeholder name",
+        "model": "jev-1.13.0",
+        "choice": "stickler",
+        "confidence": 10**400,
+    }
+    entry = set_entry("a.py", "data = load_entries()")
+    entry["verdicts"] = [verdict]
+    path = write(tmp_path, "set.json", change_set([entry]))
+    code = main(["review", path])
+    captured = capsys.readouterr()
+    assert code == 2
+    assert (
+        "Defect, files[0].verdicts[0].confidence must be from 0 to 1\n"
+        in captured.out
+    )
+    assert "Traceback" not in captured.err
+
+
 def test_review_on_a_missing_file_is_malformed_with_exit_2(tmp_path, capsys):
     code = main(["review", str(tmp_path / "gone.json")])
     out = capsys.readouterr().out

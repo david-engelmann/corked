@@ -3,7 +3,7 @@
 import json
 import pathlib
 
-from stickler.changeset import check_changeset
+from stickler.changeset import check_changeset, review_changeset
 from stickler.render import render_review, render_set_defects, render_set_review
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -172,6 +172,37 @@ def test_the_example_change_set_matches_its_golden_rendering():
         encoding="utf-8"
     )
     assert render_set_review(check_changeset(value)) == golden
+
+
+def test_a_contested_flag_gains_the_section_and_the_count():
+    diff = (
+        "--- a/x.py\n+++ b/x.py\n@@ -1,1 +1,1 @@\n"
+        "+data = load_entries()\n"
+    )
+    verdicts = [
+        {
+            "line": 4,
+            "pattern": "near placeholder name",
+            "model": "jev-1.13.0",
+            "choice": "stickler",
+            "confidence": 0.81,
+        },
+        {
+            "line": 4,
+            "pattern": "near placeholder name",
+            "model": "openai/gpt-6-luna",
+            "choice": "clean",
+            "confidence": 0.77,
+        },
+    ]
+    value = {
+        "files": [{"file": "x.py", "diff": diff, "verdicts": verdicts}]
+    }
+    rendered = render_set_review(review_changeset(value))
+    section_at = rendered.index("Contested lines")
+    summary_at = rendered.index("Summary")
+    assert section_at < summary_at
+    assert rendered.endswith("Contested, 1\n")
 
 
 def test_a_malformed_set_rendering_names_every_defect():

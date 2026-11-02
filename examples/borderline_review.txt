@@ -105,3 +105,4 @@ Judgements, 0
 Borderline, 12
 Verdict lines, stickler 11, clean 0
 Unjudged, 1
+Contested, 0

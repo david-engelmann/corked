@@ -174,3 +174,10 @@ def test_the_pilot_review_replays_to_its_recorded_exit_code(capsys):
         encoding="utf-8"
     )
     assert out == golden
+
+
+def test_the_pilot_summary_counts_zero_contested_lines():
+    review = load_json(EXAMPLES / "borderline_review.json")
+    rendered = render_set_review(review_changeset(review))
+    assert rendered.endswith("Unjudged, 1\nContested, 0\n")
+    assert "Contested lines" not in rendered

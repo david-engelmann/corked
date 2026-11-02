@@ -1,0 +1,72 @@
+Change set review
+Files, 2
+
+File, ledger.py
+
+Borderline 1, near placeholder name
+Line, data = load_entries()
+Shape reading, drawn name entries
+Verdict, jev-1.13.0, stickler
+Reason, jev-1.13.0 chose stickler with confidence 0.81
+Verdict, openai/gpt-6-luna, clean
+Reason, openai/gpt-6-luna chose clean with confidence 0.77
+
+Borderline 2, near placeholder name
+Line, temp = {}
+Shape reading, drawn name mapping
+Verdict, jev-1.13.0, clean
+Reason, jev-1.13.0 chose clean with confidence 0.9
+Verdict, openai/gpt-6-luna, clean
+Reason, openai/gpt-6-luna chose clean with confidence 0.66
+
+File, cache.py
+
+Borderline 1, shared member default
+Line, def fetch(key, memo=([],)):
+Shape reading, default holds a list literal
+Verdict, jev-1.13.0, stickler
+Reason, jev-1.13.0 chose stickler with confidence 0.92
+Verdict, openai/gpt-6-luna, stickler
+Reason, openai/gpt-6-luna chose stickler with confidence 0.88
+
+Borderline 2, broad handler
+Line,     except BaseException:
+Shape reading, handler names BaseException
+Verdict, jev-1.13.0, abstained
+Reason, jev-1.13.0 chose stickler with confidence 0.35 and abstained
+Verdict, openai/gpt-6-luna, clean
+Reason, openai/gpt-6-luna chose clean with confidence 0.83
+
+Borderline 3, near placeholder name
+Line,     tmp = []
+Shape reading, drawn name items
+Verdict, jev-1.13.0, clean
+Reason, jev-1.13.0 chose clean with confidence 0.74
+Verdict, openai/gpt-6-luna, stickler
+Reason, openai/gpt-6-luna chose stickler with confidence 0.69
+
+Borderline 4, near placeholder name
+Line, def data(rows):
+Shape reading, no drawn name
+Unjudged
+
+Contested lines
+
+File, ledger.py
+Borderline 1, near placeholder name
+Line, data = load_entries()
+Verdict, jev-1.13.0, stickler
+Verdict, openai/gpt-6-luna, clean
+
+File, cache.py
+Borderline 3, near placeholder name
+Line,     tmp = []
+Verdict, jev-1.13.0, clean
+Verdict, openai/gpt-6-luna, stickler
+
+Summary
+Judgements, 0
+Borderline, 6
+Verdict lines, stickler 3, clean 2
+Unjudged, 1
+Contested, 2
