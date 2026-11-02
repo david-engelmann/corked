@@ -1,3 +1,3 @@
-"""The agent with taste that sends back ugly code and says why."""
+"""The reviewer that sends back flawed code and naming and names the standard each flaw violates."""
 
 __version__ = "0.1.0"
