@@ -1,0 +1,13 @@
+Review of orders change, recorded review
+Verdict, sent back
+Objections, 2
+
+Objection 1, naming
+Flaw, The added line binds the order rows to the placeholder name foo
+Standard, A name says what its value holds so the reader never has to hold the assignment in memory to follow the code
+Rewrite, rows = load_rows()
+
+Objection 2, smell
+Flaw, The added line catches every exception with a bare except clause
+Standard, A handler names the failures it expects so the failures nobody expected still rise where they can be seen
+Rewrite,     except Exception:

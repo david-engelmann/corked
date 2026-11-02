@@ -1,0 +1,8 @@
+--- a/orders.py
++++ b/orders.py
+@@ -4,5 +4,7 @@
+     try:
+         total = sum(order.lines)
++    except ValueError:
++        logger.debug(total)
+     return total

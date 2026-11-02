@@ -8,13 +8,13 @@ Most agents accept whatever you hand them and whatever they produce. Corked does
 
 ## Status
 
-Seeded in October 2026. Setup has landed and the build has not started. Part of the Spectacle line in the 39 repo storefront perfection programme.
+Seeded in October 2026. Setup has landed and slice 2 is built and in review. Part of the Spectacle line in the 39 repo storefront perfection programme.
 
 ## Programme status
 
 - Closed perfection rounds, 0 of 100. A round counts only when a full cycle of work, audit, review, red team, and approval has closed. Seeding and setup are not rounds.
-- Contract, SETUP-1 to SETUP-4 met by the setup slice. The first slice obligations CK-1 to CK-4 stand in stub form in CONTRACT.md and are not yet met.
-- The first slice is a taste review of one diff, objections named with the rewrite each one would accept.
+- Contract, SETUP-1 to SETUP-4 met by the setup slice. The first slice obligations CK-1 to CK-4 now stand in full form in CONTRACT.md, and their standing is not claimed here, as slice 2 is built and in review and no round has closed.
+- Slice 2 is built and in review. It carries the review core, the built in checker with its four named shapes, the shared rendering, and the check and render commands, all running offline on recorded or local input. The first slice is a taste review of one diff, objections named with the rewrite each one would accept.
 - Local gate, python3 scripts/codepoint_scan.py and python3 -m pytest tests -q. CI runs the same commands.
 
 ## Licence
