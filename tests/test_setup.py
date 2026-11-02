@@ -10,7 +10,7 @@ def test_agents_carries_the_canonical_marker():
 
 def test_readme_states_the_closed_round_count():
     text = (ROOT / "README.md").read_text(encoding="utf-8")
-    assert re.search(r"Closed perfection rounds, 2 of 100", text)
+    assert re.search(r"Closed perfection rounds, 3 of 100", text)
 
 def test_contract_names_the_borderline_test_file_for_ck_7():
     text = (ROOT / "CONTRACT.md").read_text(encoding="utf-8")
@@ -34,13 +34,14 @@ def test_readme_reports_the_contract_status():
 def test_readme_reports_the_round_3_standing():
     text = (ROOT / "README.md").read_text(encoding="utf-8")
     standing = (
-        "- Contract, CK-7 and CK-8 now stand in full form in "
-        "CONTRACT.md. Their standing is not claimed here, as Round 3 "
-        "has not closed."
+        "- Contract, CK-7 and CK-8 met. They stand in full form in "
+        "CONTRACT.md with the Round 3 repair amendments, and Round 3 "
+        "closed on the merged slice 4 after three reviews, a repair "
+        "pass, and an approving re-review."
     )
     assert standing in text.splitlines()
     slice_line = (
-        "- Slice 4 is built and in review. It carries the borderline "
+        "- Slice 4 has landed. It carries the borderline "
         "flagging with its three patterns, the verdict seat reading "
         "both decision model routes, the recorded verdict path "
         "through the set review, and the recorded borderline pilot "
@@ -48,7 +49,7 @@ def test_readme_reports_the_round_3_standing():
         "recorded envelopes."
     )
     assert slice_line in text.splitlines()
-    assert text.count("built and in review") == 1
+    assert "built and in review" not in text
 
 def test_ci_runs_the_same_gate_as_the_local_gate():
     text = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
