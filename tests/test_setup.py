@@ -10,7 +10,7 @@ def test_agents_carries_the_canonical_marker():
 
 def test_readme_states_the_closed_round_count():
     text = (ROOT / "README.md").read_text(encoding="utf-8")
-    assert re.search(r"Closed perfection rounds, 0 of 100", text)
+    assert re.search(r"Closed perfection rounds, 1 of 100", text)
 
 def test_contract_carries_the_setup_obligations():
     text = (ROOT / "CONTRACT.md").read_text(encoding="utf-8")
@@ -20,15 +20,19 @@ def test_contract_carries_the_setup_obligations():
 def test_readme_reports_the_contract_status():
     text = (ROOT / "README.md").read_text(encoding="utf-8")
     expected = (
-        "- Contract, SETUP-1 to SETUP-4 met by the setup slice. "
-        "The first slice obligations CK-1 to CK-4 now stand in full form "
-        "in CONTRACT.md, and their standing is not claimed here, as slice 2 "
-        "is built and in review and no round has closed."
+        "- Contract, SETUP-1 to SETUP-4 and CK-1 to CK-4 met. "
+        "CK-1 to CK-4 stand in full form in CONTRACT.md with the Round 1 "
+        "repair amendments, and Round 1 closed on the merged slice 2 after "
+        "three reviews, a repair pass, and an approving re-review."
     )
     assert expected in text.splitlines()
 
 def test_ci_runs_the_same_gate_as_the_local_gate():
     text = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
-    live = "\n".join(line for line in text.splitlines() if not line.lstrip().startswith("#"))
+    live = "\n".join(
+        line.split("#", 1)[0]
+        for line in text.splitlines()
+        if not line.lstrip().startswith("#")
+    )
     assert "python3 scripts/codepoint_scan.py" in live
     assert "python3 -m pytest tests -q" in live
