@@ -270,6 +270,15 @@ def test_the_verdict_confidence_must_be_a_number_in_range():
         ], bad
 
 
+def test_an_oversized_integer_confidence_is_refused_by_range():
+    for bad in (10**400, -(10**400)):
+        assert load_changeset(
+            one_flag_set([good_verdict(confidence=bad)])
+        ) == [
+            "files[0].verdicts[0].confidence must be from 0 to 1"
+        ], bad
+
+
 def test_a_verdict_on_a_line_with_no_flag_is_named():
     assert load_changeset(one_flag_set([good_verdict(line=9)])) == [
         "files[0].verdicts[0] names no borderline line"

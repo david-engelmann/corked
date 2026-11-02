@@ -24,6 +24,24 @@ def _holds_line_break(text):
     return "\n" in text or "\r" in text
 
 
+def _confidence_is_refused(confidence):
+    """Return whether a verdict confidence figure is refused.
+
+    The figure is a number and not a boolean when this reading
+    runs, and it is refused when it is not a finite number from
+    0 to 1. An integer figure is read by the range as it stands,
+    so an integer of any size is refused by the range itself and
+    is never converted to a float to test its finiteness, under
+    FIX-CK-16. A float figure is refused when it is not finite
+    or when it stands outside the range.
+    """
+    if isinstance(confidence, int):
+        return not 0 <= confidence <= 1
+    return not math.isfinite(confidence) or not (
+        0 <= confidence <= 1
+    )
+
+
 def _validate_verdicts(index, entry, defects):
     """Name the defects of one entry's recorded verdicts.
 
@@ -90,9 +108,7 @@ def _validate_verdicts(index, entry, defects):
                 or isinstance(confidence, bool)
             ):
                 defects.append(f"{vwhere}.confidence must be a number")
-            elif not math.isfinite(confidence) or not (
-                0 <= confidence <= 1
-            ):
+            elif _confidence_is_refused(confidence):
                 defects.append(
                     f"{vwhere}.confidence must be from 0 to 1"
                 )

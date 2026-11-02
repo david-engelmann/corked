@@ -11,6 +11,7 @@ CK-8 in CONTRACT.md, in the Round 3 section.
 
 import json
 import math
+import sys
 from fractions import Fraction
 
 LABELS = ("stickler", "clean")
@@ -66,6 +67,21 @@ def _is_number(value):
     return isinstance(value, (int, float)) and not isinstance(
         value, bool
     )
+
+
+def _is_finite(value):
+    """Return whether a number is finite, read without conversion.
+
+    The value is a number and not a boolean, as _is_number reads
+    it. A float is read by math.isfinite, which no float can
+    overflow. An integer is read by comparison against the
+    largest finite float, and the comparison converts nothing,
+    so an integer with hundreds of digits is refused by the
+    comparison instead of raising, under FIX-CK-16.
+    """
+    if isinstance(value, int):
+        return -sys.float_info.max <= value <= sys.float_info.max
+    return math.isfinite(value)
 
 
 def _render_confidence(confidence):
@@ -141,7 +157,7 @@ def _verdict_from_decision(model, decision):
     confidence = decision.get("confidence")
     if not _is_number(confidence):
         return None
-    if not math.isfinite(confidence):
+    if not _is_finite(confidence):
         return None
     if confidence < 0 or confidence > 1:
         return None
@@ -150,7 +166,7 @@ def _verdict_from_decision(model, decision):
         return None
     for label in LABELS:
         value = probabilities.get(label)
-        if not _is_number(value) or not math.isfinite(value):
+        if not _is_number(value) or not _is_finite(value):
             return None
     return {
         "model": model,
@@ -274,3 +290,33 @@ def line_outcome(entries):
     if "clean" in outcomes:
         return "clean"
     return "unjudged"
+
+
+def is_contested(entries):
+    """Return whether one flagged line is contested by its verdicts.
+
+    A line is contested under CK-9 when its verdicts hold both
+    labels without abstaining, one verdict choosing stickler and
+    one from another model choosing clean. The model strings
+    are part of the rule, as FIX-CK-17 states, so a line whose
+    two labels stand under one model only is not contested, and
+    a line where one model is split and a second model holds
+    either label is contested. An abstention holds no label for
+    this reading, so a line where one side stands only as an
+    abstention is not contested.
+    """
+    stickler = [
+        entry
+        for entry in entries
+        if verdict_outcome(entry) == "stickler"
+    ]
+    clean = [
+        entry
+        for entry in entries
+        if verdict_outcome(entry) == "clean"
+    ]
+    return any(
+        one["model"] != other["model"]
+        for one in stickler
+        for other in clean
+    )

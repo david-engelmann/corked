@@ -7,7 +7,7 @@ from .review import (
     validate_review,
     verdict_for,
 )
-from .verdicts import line_outcome, reason_for, verdict_outcome
+from .verdicts import is_contested, line_outcome, reason_for, verdict_outcome
 
 
 def _label_for(review):
@@ -61,8 +61,11 @@ def render_set_review(results):
     The results are pairs of a file name and the judgements its diff
     raised, as pairs of the shape name and the objection, or triples
     whose third element holds the borderline blocks of the entry
-    under CK-8. The same results always render byte identical, and
-    results holding no flags render exactly as pairs alone render.
+    under CK-8. When a flagged line is contested under CK-9 a
+    contested section stands before the summary and the summary
+    counts the contested lines. The same results always render byte
+    identical, and results holding no flags render exactly as pairs
+    alone render.
     """
     lines = ["Change set review", f"Files, {len(results)}"]
     total = 0
@@ -70,6 +73,7 @@ def render_set_review(results):
     worst = []
     flag_total = 0
     judged_lines = {"stickler": 0, "clean": 0, "unjudged": 0}
+    contested = []
     for result in results:
         name, judgements = result[0], result[1]
         blocks = result[2] if len(result) > 2 else []
@@ -100,6 +104,8 @@ def render_set_review(results):
             flag_total += 1
             outcome = line_outcome(entries)
             judged_lines[outcome] += 1
+            if is_contested(entries):
+                contested.append((name, index, flag, entries))
             lines.append("")
             lines.append(f"Borderline {index}, {flag['pattern']}")
             lines.append(f"Line, {flag['content']}")
@@ -117,6 +123,19 @@ def render_set_review(results):
                 lines.append(f"Reason, {reason_for(entry)}")
             if outcome == "unjudged":
                 lines.append("Unjudged")
+    if contested:
+        lines.append("")
+        lines.append("Contested lines")
+        for name, index, flag, entries in contested:
+            lines.append("")
+            lines.append(f"File, {name}")
+            lines.append(f"Borderline {index}, {flag['pattern']}")
+            lines.append(f"Line, {flag['content']}")
+            for entry in entries:
+                lines.append(
+                    f"Verdict, {entry['model']}, "
+                    f"{verdict_outcome(entry)}"
+                )
     lines.append("")
     lines.append("Summary")
     lines.append(f"Judgements, {total}")
@@ -130,6 +149,7 @@ def render_set_review(results):
             f"clean {judged_lines['clean']}"
         )
         lines.append(f"Unjudged, {judged_lines['unjudged']}")
+        lines.append(f"Contested, {len(contested)}")
     if worst:
         lines.append("Files with judgements, worst first")
         ordered = sorted(worst, key=lambda item: (-item[1], item[0]))

@@ -49,7 +49,26 @@ def test_readme_reports_the_round_3_standing():
         "recorded envelopes."
     )
     assert slice_line in text.splitlines()
-    assert "built and in review" not in text
+    assert "Slice 4 is built and in review" not in text
+
+def test_readme_reports_the_round_4_standing():
+    text = (ROOT / "README.md").read_text(encoding="utf-8")
+    standing = (
+        "- Contract, CK-9 and CK-10 now stand in full form in "
+        "CONTRACT.md. Their standing is not claimed here, as Round 4 "
+        "has not closed."
+    )
+    assert standing in text.splitlines()
+    slice_line = (
+        "- Slice 5 is built and in review. It carries the contested "
+        "line reading of the set review, with the contested section "
+        "before the summary and the contested count in the summary, "
+        "and the constructed contested example under examples, with "
+        "the suite running offline on the recorded pilot and the "
+        "constructed example."
+    )
+    assert slice_line in text.splitlines()
+    assert text.count("built and in review") == 1
 
 def test_ci_runs_the_same_gate_as_the_local_gate():
     text = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")

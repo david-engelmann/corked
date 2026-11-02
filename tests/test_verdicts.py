@@ -7,6 +7,7 @@ The readings the seat presents stand word for word in the
 contract under FIX-CK-14, and a pin here holds them to it.
 """
 
+import json
 import pathlib
 import unittest
 
@@ -96,6 +97,42 @@ class SeatReaderTests(unittest.TestCase):
                 jev_envelope(confidence=float("nan"))
             )
         )
+
+    def test_an_oversized_integer_confidence_records_nothing(self):
+        self.assertIsNone(
+            verdict_from_jev_envelope(jev_envelope(confidence=10**400))
+        )
+        self.assertIsNone(
+            verdict_from_jev_envelope(jev_envelope(confidence=-(10**400)))
+        )
+
+    def test_an_oversized_integer_confidence_in_a_chat_envelope(
+        self,
+    ):
+        content = json.dumps(
+            {
+                "choice": "stickler",
+                "confidence": 10**400,
+                "probabilities": {"stickler": 0.9, "clean": 0.1},
+            }
+        )
+        self.assertIsNone(
+            verdict_from_chat_envelope(chat_envelope(content))
+        )
+
+    def test_an_oversized_integer_probability_records_nothing(self):
+        envelope = jev_envelope()
+        envelope["answers"]["decision"]["probabilities"] = {
+            "stickler": 10**400,
+            "clean": 0.1,
+        }
+        self.assertIsNone(verdict_from_jev_envelope(envelope))
+        envelope = jev_envelope()
+        envelope["answers"]["decision"]["probabilities"] = {
+            "stickler": 0.9,
+            "clean": -(10**400),
+        }
+        self.assertIsNone(verdict_from_jev_envelope(envelope))
 
     def test_a_boolean_confidence_records_nothing(self):
         self.assertIsNone(
