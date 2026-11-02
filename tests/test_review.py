@@ -44,6 +44,20 @@ def test_non_string_diff_label_is_named():
     assert validate_review(bad) == ["diff_label must be a non empty string"]
 
 
+def test_a_diff_label_holding_an_unpaired_surrogate_is_named():
+    bad = {"diff_label": "\ud800x", "objections": []}
+    assert validate_review(bad) == ["diff_label holds an unpaired surrogate"]
+    assert verdict_for(bad) == "invalid"
+
+
+def test_each_text_field_holding_an_unpaired_surrogate_is_named():
+    for field in ("flaw", "standard", "rewrite"):
+        objection = dict(COMPLETE, **{field: "bad \ud800 text"})
+        assert validate_review(review([objection])) == [
+            f"objections[0].{field} holds an unpaired surrogate"
+        ], field
+
+
 def test_missing_objections_is_named():
     assert validate_review({"diff_label": "x"}) == ["objections is missing"]
 

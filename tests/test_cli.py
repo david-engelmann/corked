@@ -146,3 +146,139 @@ def test_the_smelly_example_sends_back_and_the_clean_example_accepts(capsys):
     out = capsys.readouterr().out
     assert code == 0
     assert "Verdict, accepted\n" in out
+
+
+def change_set(entries):
+    return json.dumps({"files": entries})
+
+
+def set_entry(name, *added_lines):
+    lines = ["--- a/x.py", "+++ b/x.py", "@@ -1,1 +1,1 @@"]
+    lines.extend("+" + line for line in added_lines)
+    return {"file": name, "diff": "\n".join(lines) + "\n"}
+
+
+def test_review_on_a_clean_set_exits_0(tmp_path, capsys):
+    path = write(tmp_path, "set.json",
+                 change_set([set_entry("a.py", "    logger.debug(total)")]))
+    code = main(["review", path])
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "File, a.py\n" in out
+    assert "Clean\n" in out
+    assert "Judgements, 0\n" in out
+
+
+def test_review_on_a_set_with_judgements_exits_1(tmp_path, capsys):
+    path = write(tmp_path, "set.json",
+                 change_set([set_entry("a.py", "    print(total)")]))
+    code = main(["review", path])
+    out = capsys.readouterr().out
+    assert code == 1
+    assert "Judgement 1, smell\n" in out
+    assert "Worst, a.py, 1\n" in out
+
+
+def test_review_on_a_non_json_file_is_malformed_with_exit_2(tmp_path, capsys):
+    code = main(["review", write(tmp_path, "set.json", "not json")])
+    out = capsys.readouterr().out
+    assert code == 2
+    assert "Verdict, invalid\n" in out
+    assert "Defect, the file does not hold a JSON change set\n" in out
+
+
+def test_review_on_a_set_with_a_loader_defect_exits_2_and_names_it(
+        tmp_path, capsys):
+    path = write(tmp_path, "set.json",
+                 change_set([{"file": "a.py"}]))
+    code = main(["review", path])
+    out = capsys.readouterr().out
+    assert code == 2
+    assert "Defect, files[0].diff is missing\n" in out
+
+
+def test_review_on_a_missing_file_is_malformed_with_exit_2(tmp_path, capsys):
+    code = main(["review", str(tmp_path / "gone.json")])
+    out = capsys.readouterr().out
+    assert code == 2
+    assert "Defect, the change set file could not be read\n" in out
+
+
+def test_review_on_a_non_utf8_file_is_malformed_with_exit_2(tmp_path, capsys):
+    data = b'{"files": [{"file": "bad \xff\xfe", "diff": ""}]}'
+    code = main(["review", write_bytes(tmp_path, "set.json", data)])
+    out = capsys.readouterr().out
+    assert code == 2
+    assert "Defect, the change set file could not be read\n" in out
+
+
+def test_review_on_a_deeply_nested_file_is_malformed_with_exit_2(
+        tmp_path, capsys):
+    data = ("[" * 100000 + "]" * 100000).encode("utf-8")
+    code = main(["review", write_bytes(tmp_path, "set.json", data)])
+    out = capsys.readouterr().out
+    assert code == 2
+    assert "Defect, the file does not hold a JSON change set\n" in out
+
+
+def test_review_usage_errors_exit_2(capsys):
+    assert main(["review"]) == 2
+    assert main(["review", "a", "b"]) == 2
+
+
+def test_review_on_a_surrogate_file_name_is_malformed_with_exit_2(
+        tmp_path, capsys):
+    path = write(tmp_path, "set.json",
+                 change_set([{"file": "\ud800x.py", "diff": ""}]))
+    code = main(["review", path])
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "Defect, files[0].file holds an unpaired surrogate\n" in captured.out
+    assert "Traceback" not in captured.err
+    captured.out.encode("utf-8")
+
+
+def test_review_on_a_surrogate_in_diff_text_is_malformed_with_exit_2(
+        tmp_path, capsys):
+    path = write(tmp_path, "set.json",
+                 change_set([{"file": "a.py", "diff": "+print('\ud800')"}]))
+    code = main(["review", path])
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "Defect, files[0].diff holds an unpaired surrogate\n" in captured.out
+    assert "Traceback" not in captured.err
+    captured.out.encode("utf-8")
+
+
+def test_render_on_a_surrogate_diff_label_is_invalid_with_exit_2(
+        tmp_path, capsys):
+    path = write(tmp_path, "review.json",
+                 json.dumps({"diff_label": "\ud800x", "objections": []}))
+    code = main(["render", path])
+    captured = capsys.readouterr()
+    assert code == 2
+    assert captured.out.startswith("Review of unnamed review\n")
+    assert "Defect, diff_label holds an unpaired surrogate\n" in captured.out
+    assert "Traceback" not in captured.err
+    captured.out.encode("utf-8")
+
+
+def test_render_on_a_surrogate_objection_field_is_invalid_with_exit_2(
+        tmp_path, capsys):
+    objection = {
+        "flaw": "bad \ud800 text",
+        "standard": "A name says what its value holds",
+        "rewrite": "orders = load_orders()",
+        "category": "naming",
+    }
+    path = write(tmp_path, "review.json",
+                 json.dumps({"diff_label": "rough",
+                             "objections": [objection]}))
+    code = main(["render", path])
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "Defect, objections[0].flaw holds an unpaired surrogate\n" in (
+        captured.out
+    )
+    assert "Traceback" not in captured.err
+    captured.out.encode("utf-8")

@@ -1,0 +1,47 @@
+Change set review
+Files, 3
+
+File, basket.py
+Judgements, 2
+
+Judgement 1, structure
+Flaw, The added line gives the class attribute seen a mutable literal that every instance shares
+Standard, A mutable value that belongs to each instance is built in the initializer, so one instance changing it never changes it for every other instance
+Rewrite, Move seen into the initializer as self.seen = [] and remove the class level assignment
+
+Judgement 2, structure
+Flaw, The added def line gives a parameter a default that is a call, so the call runs once when the definition is read and every call that omits the argument shares the one result
+Standard, A default that must be computed on each call is written as None and the value is built inside the body under a None check
+Rewrite,     def stamp(self, at=None): and build each replaced default inside the body under a None check
+
+File, report.py
+Judgements, 3
+
+Judgement 1, structure
+Flaw, The added def line gives a parameter a mutable default that every call shares
+Standard, A default that must be fresh on each call is written as None and the value is built inside the body
+Rewrite, def render(total, history=None):
+
+Judgement 2, smell
+Flaw, The added line catches every exception with a bare except clause
+Standard, A handler names the failures it expects so the failures nobody expected still rise where they can be seen
+Rewrite,     except Exception:
+
+Judgement 3, smell
+Flaw, The added line sends diagnostics through a print call
+Standard, Diagnostics travel through the logging module so they can be levelled, filtered, and silenced
+Rewrite,         logger.debug(total)
+
+File, tidy.py
+Clean
+
+Summary
+Judgements, 5
+Shape, bare except, 1
+Shape, print call, 1
+Shape, mutable default, 1
+Shape, call default, 1
+Shape, class attribute, 1
+Files with judgements, worst first
+Worst, report.py, 3
+Worst, basket.py, 2
