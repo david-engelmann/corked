@@ -1,0 +1,18 @@
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "decision": {
+      "type": "choice",
+      "choice": "stickler",
+      "confidence": 0.2,
+      "probabilities": {
+        "stickler": 0.6,
+        "clean": 0.4
+      }
+    }
+  },
+  "usage": {
+    "input_tokens": 481,
+    "output_tokens": 35
+  }
+}

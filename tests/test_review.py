@@ -50,6 +50,13 @@ def test_a_diff_label_holding_an_unpaired_surrogate_is_named():
     assert verdict_for(bad) == "invalid"
 
 
+def test_a_diff_label_holding_a_line_break_is_named():
+    for broken in ("evil\nForged, 99", "evil\rForged, 99"):
+        bad = {"diff_label": broken, "objections": []}
+        assert validate_review(bad) == ["diff_label holds a line break"]
+        assert verdict_for(bad) == "invalid"
+
+
 def test_each_text_field_holding_an_unpaired_surrogate_is_named():
     for field in ("flaw", "standard", "rewrite"):
         objection = dict(COMPLETE, **{field: "bad \ud800 text"})

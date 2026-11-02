@@ -19,6 +19,10 @@ def _holds_unpaired_surrogate(text):
     return False
 
 
+def _holds_line_break(text):
+    return "\n" in text or "\r" in text
+
+
 def validate_review(review):
     """Return the list of defects found in a review. Never raises."""
     defects = []
@@ -30,6 +34,8 @@ def validate_review(review):
         defects.append("diff_label must be a non empty string")
     elif _holds_unpaired_surrogate(review["diff_label"]):
         defects.append("diff_label holds an unpaired surrogate")
+    elif _holds_line_break(review["diff_label"]):
+        defects.append("diff_label holds a line break")
     if "objections" not in review:
         defects.append("objections is missing")
         return defects

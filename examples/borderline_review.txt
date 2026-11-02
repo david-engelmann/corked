@@ -1,0 +1,107 @@
+Change set review
+Files, 3
+
+File, harvest.py
+
+Borderline 1, near placeholder name
+Line, data = load_entries()
+Shape reading, drawn name entries
+Verdict, jev-1.13.0, abstained
+Reason, jev-1.13.0 chose stickler with confidence 0.32 and abstained
+Unjudged
+
+Borderline 2, near placeholder name
+Line, temp = []
+Shape reading, drawn name items
+Verdict, jev-1.13.0, stickler
+Reason, jev-1.13.0 chose stickler with confidence 0.68
+
+Borderline 3, broad handler
+Line,     except BaseException:
+Shape reading, handler names BaseException
+Verdict, jev-1.13.0, stickler
+Reason, jev-1.13.0 chose stickler with confidence 1.0
+Verdict, openai/gpt-6-luna, stickler
+Reason, openai/gpt-6-luna chose stickler with confidence 0.99
+
+Borderline 4, broad handler
+Line,     except BaseException:
+Shape reading, handler names BaseException
+Verdict, jev-1.13.0, stickler
+Reason, jev-1.13.0 chose stickler with confidence 1.0
+Verdict, openai/gpt-6-luna, stickler
+Reason, openai/gpt-6-luna chose stickler with confidence 0.99
+
+File, windows.py
+
+Borderline 1, shared member default
+Line, def plan(start, cache=([],)):
+Shape reading, default holds a list literal
+Verdict, jev-1.13.0, stickler
+Reason, jev-1.13.0 chose stickler with confidence 0.96
+Verdict, openai/gpt-6-luna, stickler
+Reason, openai/gpt-6-luna chose stickler with confidence 0.99
+
+Borderline 2, shared member default
+Line, def grid(rows, defaults=({"unit": "m"}, 2)):
+Shape reading, default holds a dict literal
+Verdict, jev-1.13.0, stickler
+Reason, jev-1.13.0 chose stickler with confidence 0.76
+Verdict, openai/gpt-6-luna, stickler
+Reason, openai/gpt-6-luna chose stickler with confidence 0.99
+
+Borderline 3, shared member default
+Line, def pack(items, pair=([], {})):
+Shape reading, default holds a list literal
+Verdict, jev-1.13.0, stickler
+Reason, jev-1.13.0 chose stickler with confidence 0.98
+Verdict, openai/gpt-6-luna, stickler
+Reason, openai/gpt-6-luna chose stickler with confidence 0.99
+
+Borderline 4, shared member default
+Line, def pick(mode, seen=({1, 2},)):
+Shape reading, default holds a set literal
+Verdict, jev-1.13.0, stickler
+Reason, jev-1.13.0 chose stickler with confidence 0.74
+Verdict, openai/gpt-6-luna, stickler
+Reason, openai/gpt-6-luna chose stickler with confidence 0.99
+
+File, sorting.py
+
+Borderline 1, near placeholder name
+Line, def temp(rows):
+Shape reading, no drawn name
+Verdict, jev-1.13.0, stickler
+Reason, jev-1.13.0 chose stickler with confidence 0.78
+Verdict, openai/gpt-6-luna, stickler
+Reason, openai/gpt-6-luna chose stickler with confidence 0.97
+
+Borderline 2, near placeholder name
+Line,     data, extra = left, right
+Shape reading, no drawn name
+Verdict, jev-1.13.0, abstained
+Reason, jev-1.13.0 chose stickler with confidence 0.2 and abstained
+Verdict, openai/gpt-6-luna, stickler
+Reason, openai/gpt-6-luna chose stickler with confidence 0.88
+
+Borderline 3, near placeholder name
+Line,     tmp: list = []
+Shape reading, drawn name items
+Verdict, jev-1.13.0, stickler
+Reason, jev-1.13.0 chose stickler with confidence 0.78
+Verdict, openai/gpt-6-luna, stickler
+Reason, openai/gpt-6-luna chose stickler with confidence 0.88
+
+Borderline 4, broad handler
+Line,     except BaseException as err:
+Shape reading, handler names BaseException
+Verdict, jev-1.13.0, stickler
+Reason, jev-1.13.0 chose stickler with confidence 0.98
+Verdict, openai/gpt-6-luna, stickler
+Reason, openai/gpt-6-luna chose stickler with confidence 0.99
+
+Summary
+Judgements, 0
+Borderline, 12
+Verdict lines, stickler 11, clean 0
+Unjudged, 1
