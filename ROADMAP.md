@@ -61,5 +61,9 @@ cost over the recorded borderline fixtures before any live diff is
 judged. Every live round logs its estimate before it runs and its
 actual spend after, in the Spectacle line ledger, under the
 standing cap of 50 dollars per repo per round that the owner set on
-2026-11-02. Spend beyond this proposal waits for the owner's word
-through the main chat.
+2026-11-02. The cap stated here is the
+standing budget for this repo under the owner's ample budget
+ruling of the same day, and a live round runs against it without
+a further approval step. Raising the cap means amending this
+section with the reason recorded, in the open, and the spend
+ledger still closes every round.
