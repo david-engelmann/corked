@@ -10,7 +10,7 @@ def test_agents_carries_the_canonical_marker():
 
 def test_readme_states_the_closed_round_count():
     text = (ROOT / "README.md").read_text(encoding="utf-8")
-    assert re.search(r"Closed perfection rounds, 1 of 100", text)
+    assert re.search(r"Closed perfection rounds, 2 of 100", text)
 
 def test_contract_carries_the_setup_obligations():
     text = (ROOT / "CONTRACT.md").read_text(encoding="utf-8")
@@ -20,7 +20,7 @@ def test_contract_carries_the_setup_obligations():
 def test_readme_reports_the_contract_status():
     text = (ROOT / "README.md").read_text(encoding="utf-8")
     expected = (
-        "- Contract, SETUP-1 to SETUP-4 and CK-1 to CK-4 met. "
+        "- Contract, SETUP-1 to SETUP-4 and CK-1 to CK-6 met. "
         "CK-1 to CK-4 stand in full form in CONTRACT.md with the Round 1 "
         "repair amendments, and Round 1 closed on the merged slice 2 after "
         "three reviews, a repair pass, and an approving re-review."
