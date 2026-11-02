@@ -1,11 +1,17 @@
-"""The corked command line. Two commands, check and render."""
+"""The corked command line. Three commands, check, render, and review."""
 
 import json
 import pathlib
 import sys
 
+from .changeset import check_changeset, load_changeset
 from .checker import check_diff_text
-from .render import render_defects, render_review
+from .render import (
+    render_defects,
+    render_review,
+    render_set_defects,
+    render_set_review,
+)
 from .review import verdict_for
 
 _EXIT_CODES = {"accepted": 0, "sent back": 1, "invalid": 2}
@@ -47,6 +53,28 @@ def _render(path):
     return _EXIT_CODES[verdict_for(review)]
 
 
+def _review(path):
+    try:
+        text = _read_text(path)
+    except (OSError, UnicodeDecodeError):
+        print(render_set_defects(
+            ["the change set file could not be read"]), end="")
+        return 2
+    try:
+        value = json.loads(text)
+    except (ValueError, RecursionError):
+        print(render_set_defects(
+            ["the file does not hold a JSON change set"]), end="")
+        return 2
+    defects = load_changeset(value)
+    if defects:
+        print(render_set_defects(defects), end="")
+        return 2
+    results = check_changeset(value)
+    print(render_set_review(results), end="")
+    return 1 if any(judgements for _name, judgements in results) else 0
+
+
 def main(argv=None):
     """Run the command line and return the exit code."""
     args = list(sys.argv[1:] if argv is None else argv)
@@ -54,8 +82,11 @@ def main(argv=None):
         return _check(args[1])
     if len(args) == 2 and args[0] == "render":
         return _render(args[1])
+    if len(args) == 2 and args[0] == "review":
+        return _review(args[1])
     print("Usage, corked check DIFF_FILE", file=sys.stderr)
     print("Usage, corked render REVIEW_JSON", file=sys.stderr)
+    print("Usage, corked review SET_JSON", file=sys.stderr)
     return 2
 
 

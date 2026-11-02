@@ -1,0 +1,16 @@
+{
+  "files": [
+    {
+      "file": "basket.py",
+      "diff": "--- a/basket.py\n+++ b/basket.py\n@@ -1,3 +1,6 @@\n class Basket:\n+    seen = []\n+    def stamp(self, at=now()):\n+        return at\n"
+    },
+    {
+      "file": "report.py",
+      "diff": "--- a/report.py\n+++ b/report.py\n@@ -2,3 +2,6 @@\n+def render(total, history=[]):\n     try:\n         return format_total(total)\n+    except:\n+        print(total)\n"
+    },
+    {
+      "file": "tidy.py",
+      "diff": "--- a/tidy.py\n+++ b/tidy.py\n@@ -1,2 +1,3 @@\n def render(total):\n+    logger.debug(total)\n     return format_total(total)\n"
+    }
+  ]
+}

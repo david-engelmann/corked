@@ -246,3 +246,283 @@ def test_a_spaced_empty_set_call_fires_as_a_mutable_default():
     assert len(objections) == 1
     assert objections[0]["category"] == "structure"
     assert objections[0]["rewrite"] == "def load(seen=None):"
+
+
+def raw(*lines):
+    return diff("--- a/app.py", "+++ b/app.py", "@@ -1,1 +1,1 @@", *lines)
+
+
+CALL_REWRITE_END = " and build each replaced default inside the body under a None check"
+
+
+def test_a_call_default_fires_with_the_none_check_rewrite():
+    objections = check_diff_text(added("def stamp(at=now()):"))
+    assert len(objections) == 1
+    assert objections[0]["category"] == "structure"
+    assert objections[0]["rewrite"] == "def stamp(at=None):" + CALL_REWRITE_END
+
+
+def test_a_dotted_call_default_fires():
+    objections = check_diff_text(added("def stamp(at=datetime.now()):"))
+    assert len(objections) == 1
+    assert objections[0]["rewrite"] == "def stamp(at=None):" + CALL_REWRITE_END
+
+
+def test_a_call_default_with_keyword_arguments_fires():
+    objections = check_diff_text(added("def load(at=now(tz=utc)):"))
+    assert len(objections) == 1
+    assert objections[0]["rewrite"] == "def load(at=None):" + CALL_REWRITE_END
+
+
+def test_an_annotated_call_default_fires():
+    objections = check_diff_text(added("def stamp(at: str = now()):"))
+    assert len(objections) == 1
+    assert objections[0]["rewrite"] == (
+        "def stamp(at: str = None):" + CALL_REWRITE_END
+    )
+
+
+def test_two_call_defaults_draw_one_objection_rewriting_both():
+    objections = check_diff_text(added("def stamp(a=now(), b=later()):"))
+    assert len(objections) == 1
+    assert objections[0]["rewrite"] == (
+        "def stamp(a=None, b=None):" + CALL_REWRITE_END
+    )
+
+
+def test_a_mutable_default_and_a_call_default_fire_in_shape_order():
+    objections = check_diff_text(added("def load(items=[], at=now()):"))
+    assert [o["category"] for o in objections] == ["structure", "structure"]
+    assert objections[0]["rewrite"] == "def load(items=None, at=now()):"
+    assert objections[1]["rewrite"] == (
+        "def load(items=[], at=None):" + CALL_REWRITE_END
+    )
+
+
+def test_the_empty_set_call_is_a_mutable_default_and_not_a_call_default():
+    objections = check_diff_text(added("def load(seen=set()):"))
+    assert len(objections) == 1
+    assert objections[0]["rewrite"] == "def load(seen=None):"
+
+
+def test_non_call_defaults_do_not_fire_the_call_default_shape():
+    assert check_diff_text(added("def load(at=now):")) == []
+    assert check_diff_text(added("def load(at=lambda: 1):")) == []
+    assert check_diff_text(added("def load(at=now() + 1):")) == []
+    assert check_diff_text(added("def load(at=(now())):")) == []
+
+
+def test_a_call_default_on_a_placeholder_def_stands_after_the_naming():
+    objections = check_diff_text(added("def foo(at=now()):"))
+    assert [o["category"] for o in objections] == ["naming", "structure"]
+    assert objections[1]["rewrite"] == "def foo(at=None):" + CALL_REWRITE_END
+
+
+def test_a_signature_split_across_lines_reads_no_call_default():
+    text = added("def load(at=now(),", "        other=1):")
+    assert check_diff_text(text) == []
+
+
+def test_a_class_attribute_list_literal_fires_with_the_move_rewrite():
+    text = raw(" class Config:", "+    seen = []")
+    objections = check_diff_text(text)
+    assert len(objections) == 1
+    assert objections[0]["category"] == "structure"
+    assert objections[0]["flaw"] == (
+        "The added line gives the class attribute seen "
+        "a mutable literal that every instance shares"
+    )
+    assert objections[0]["rewrite"] == (
+        "Move seen into the initializer as self.seen = [] "
+        "and remove the class level assignment"
+    )
+
+
+def test_class_attribute_dict_and_set_literals_fire():
+    cases = (
+        ("    table = {'a': 1}", "self.table = {'a': 1}"),
+        ("    tags = {1, 2}", "self.tags = {1, 2}"),
+        ("    items = [1, 2]", "self.items = [1, 2]"),
+    )
+    for line, moved in cases:
+        text = raw(" class Config:", "+" + line)
+        objections = check_diff_text(text)
+        assert len(objections) == 1, line
+        name = line.strip().split(" ")[0]
+        assert objections[0]["rewrite"] == (
+            f"Move {name} into the initializer as {moved} "
+            "and remove the class level assignment"
+        ), line
+
+
+def test_an_annotated_class_attribute_fires():
+    text = raw(" class Config:", "+    seen: list = []")
+    objections = check_diff_text(text)
+    assert len(objections) == 1
+    assert objections[0]["rewrite"] == (
+        "Move seen into the initializer as self.seen = [] "
+        "and remove the class level assignment"
+    )
+
+
+def test_a_class_with_bases_still_opens_a_class_body():
+    text = raw(" class Config(Base, Mixin):", "+    seen = []")
+    assert len(check_diff_text(text)) == 1
+
+
+def test_a_module_level_literal_assignment_draws_nothing():
+    assert check_diff_text(added("seen = []")) == []
+    assert check_diff_text(added("table = {'a': 1}")) == []
+
+
+def test_a_literal_assignment_inside_a_function_inside_a_class_draws_nothing():
+    text = raw(" class Config:", "     def build(self):", "+        cache = []")
+    assert check_diff_text(text) == []
+
+
+def test_a_literal_assignment_inside_a_class_inside_a_function_fires():
+    text = raw(" def build():", "     class Inner:", "+        seen = []")
+    objections = check_diff_text(text)
+    assert len(objections) == 1
+    assert objections[0]["category"] == "structure"
+
+
+def test_a_literal_assignment_inside_a_nested_class_fires():
+    text = raw(" class Outer:", "     class Inner:", "+        seen = []")
+    assert len(check_diff_text(text)) == 1
+
+
+def test_a_literal_assignment_under_a_conditional_in_a_class_fires():
+    text = raw(" class Config:", "     if DEBUG:", "+        seen = []")
+    assert len(check_diff_text(text)) == 1
+
+
+def test_a_second_hunk_without_the_class_line_carries_no_class_context():
+    text = diff(
+        "--- a/app.py", "+++ b/app.py",
+        "@@ -1,2 +1,2 @@", " class Config:", "     value = 1",
+        "@@ -20,1 +20,2 @@", "     other = 2", "+    seen = []",
+    )
+    assert check_diff_text(text) == []
+
+
+def test_a_removed_class_line_opens_no_class_body():
+    text = raw("-class Config:", "+    seen = []")
+    assert check_diff_text(text) == []
+
+
+def test_a_class_level_call_or_scalar_assignment_draws_nothing():
+    for line in ("    seen = list()", "    count = 0", "    name = 'x'",
+                 "    seen = [1] + [2]"):
+        text = raw(" class Config:", "+" + line)
+        assert check_diff_text(text) == [], line
+
+
+def test_a_placeholder_in_a_class_body_draws_naming_then_structure():
+    text = raw(" class Config:", "+    foo = []")
+    objections = check_diff_text(text)
+    assert [o["category"] for o in objections] == ["naming", "structure"]
+    assert objections[0]["rewrite"] == "    items = []"
+    assert objections[1]["rewrite"] == (
+        "Move foo into the initializer as self.foo = [] "
+        "and remove the class level assignment"
+    )
+
+
+def test_a_method_def_line_in_a_class_still_draws_the_def_shapes():
+    text = raw(" class Config:", "+    def build(self, items=[]):")
+    objections = check_diff_text(text)
+    assert len(objections) == 1
+    assert objections[0]["rewrite"] == "    def build(self, items=None):"
+
+
+def test_a_one_line_class_draws_nothing():
+    assert check_diff_text(added("class Config: seen = []")) == []
+
+
+def test_a_blank_context_line_inside_a_class_body_closes_nothing():
+    text = diff(
+        "--- a/app.py", "+++ b/app.py", "@@ -1,1 +1,1 @@",
+        " class Config:", "     value = 1", " ", "+    items = []",
+    )
+    objections = check_diff_text(text)
+    assert len(objections) == 1
+    assert objections[0]["rewrite"] == (
+        "Move items into the initializer as self.items = [] "
+        "and remove the class level assignment"
+    )
+
+
+def test_an_added_blank_line_inside_a_class_body_closes_nothing():
+    text = raw(" class Config:", "+", "+    items = []")
+    assert len(check_diff_text(text)) == 1
+
+
+def test_the_written_forms_of_a_blank_line_read_the_same_way():
+    forms = (
+        (" class Config:", "", "+    items = []"),
+        (" class Config:", " ", "+    items = []"),
+        (" class Config:", "   ", "+    items = []"),
+    )
+    for lines in forms:
+        assert len(check_diff_text(raw(*lines))) == 1, lines
+
+
+def test_a_tab_only_context_line_inside_a_class_body_closes_nothing():
+    text = raw(" class Config:", " \t", "+    items = []")
+    objections = check_diff_text(text)
+    assert len(objections) == 1
+    assert objections[0]["rewrite"] == (
+        "Move items into the initializer as self.items = [] "
+        "and remove the class level assignment"
+    )
+
+
+def test_a_tab_only_added_line_inside_a_class_body_closes_nothing():
+    text = raw(" class Config:", "+\t", "+    items = []")
+    assert len(check_diff_text(text)) == 1
+
+
+def test_a_call_default_holding_an_escaped_quote_fires():
+    objections = check_diff_text(added('def f(a=make("a\\")b")):'))
+    assert len(objections) == 1
+    assert objections[0]["rewrite"] == "def f(a=None):" + CALL_REWRITE_END
+
+
+def test_a_call_default_after_a_string_holding_an_escaped_quote_fires():
+    objections = check_diff_text(added('def f(a="x\\")y", b=now()):'))
+    assert len(objections) == 1
+    assert objections[0]["rewrite"] == (
+        'def f(a="x\\")y", b=None):' + CALL_REWRITE_END
+    )
+
+
+def test_a_class_attribute_literal_holding_an_escaped_quote_fires():
+    text = raw(" class Config:", '+    x = ["a\\" ] ", "b"]')
+    objections = check_diff_text(text)
+    assert len(objections) == 1
+    assert objections[0]["rewrite"] == (
+        'Move x into the initializer as self.x = ["a\\" ] ", "b"] '
+        "and remove the class level assignment"
+    )
+
+
+def test_a_placeholder_dict_holding_an_escaped_quote_draws_the_dict_name():
+    objections = check_diff_text(added('foo = {"a\\"b": 1}'))
+    assert len(objections) == 1
+    assert objections[0]["rewrite"] == 'mapping = {"a\\"b": 1}'
+
+
+def test_a_plain_file_header_empties_the_class_stack():
+    text = diff(
+        "--- a/x.py", "+++ b/x.py", "@@ -1,1 +1,1 @@",
+        " class Config:", "+    seen = []",
+        "--- a/y.py", "+++ b/y.py",
+        "+    items = []",
+    )
+    objections = check_diff_text(text)
+    assert len(objections) == 1
+    assert objections[0]["rewrite"] == (
+        "Move seen into the initializer as self.seen = [] "
+        "and remove the class level assignment"
+    )

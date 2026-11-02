@@ -9,6 +9,16 @@ def _is_blank(value):
     return not isinstance(value, str) or not value.strip()
 
 
+def _holds_unpaired_surrogate(text):
+    """Read a string for an unpaired surrogate. Such a string cannot
+    be encoded as UTF-8 text and so cannot be printed."""
+    try:
+        text.encode("utf-8")
+    except UnicodeEncodeError:
+        return True
+    return False
+
+
 def validate_review(review):
     """Return the list of defects found in a review. Never raises."""
     defects = []
@@ -18,6 +28,8 @@ def validate_review(review):
         defects.append("diff_label is missing")
     elif _is_blank(review["diff_label"]):
         defects.append("diff_label must be a non empty string")
+    elif _holds_unpaired_surrogate(review["diff_label"]):
+        defects.append("diff_label holds an unpaired surrogate")
     if "objections" not in review:
         defects.append("objections is missing")
         return defects
@@ -36,6 +48,14 @@ def validate_review(review):
         for field in TEXT_FIELDS:
             if field in objection and _is_blank(objection[field]):
                 defects.append(f"{where}.{field} must be a non empty string")
+            elif (
+                field in objection
+                and isinstance(objection[field], str)
+                and _holds_unpaired_surrogate(objection[field])
+            ):
+                defects.append(
+                    f"{where}.{field} holds an unpaired surrogate"
+                )
         if "category" in objection and objection["category"] not in CATEGORIES:
             defects.append(
                 f"{where}.category must be one of naming, structure, smell"
