@@ -11,6 +11,10 @@ path = "rust/src/lib.rs"
 name = "stickler"
 path = "rust/src/main.rs"
 
+[[bin]]
+name = "codepoint_scan"
+path = "rust/src/bin/codepoint_scan.rs"
+
 [[test]]
 name = "test_borderline"
 path = "rust/tests/test_borderline.rs"

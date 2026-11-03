@@ -12,4 +12,5 @@ pub mod json;
 pub mod pycompat;
 pub mod render;
 pub mod review;
+pub mod scan;
 pub mod verdicts;
