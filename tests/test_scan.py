@@ -52,3 +52,9 @@ def test_a_clean_tree_passes_the_scan(tmp_path):
     assert result.returncode == 0
     assert "U+2014=0" in result.stdout
     assert "U+2013=0" in result.stdout
+
+
+def test_a_dash_in_a_rust_file_fails_the_scan(tmp_path):
+    result = planted_tree(tmp_path, {"lib.rs": f"// a note {EM_DASH} held\n"})
+    assert result.returncode == 1
+    assert "U+2014=1" in result.stdout

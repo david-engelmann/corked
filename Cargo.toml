@@ -1,0 +1,68 @@
+[package]
+name = "stickler"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "stickler"
+path = "rust/src/lib.rs"
+
+[[bin]]
+name = "stickler"
+path = "rust/src/main.rs"
+
+[[test]]
+name = "test_borderline"
+path = "rust/tests/test_borderline.rs"
+
+[[test]]
+name = "test_changeset"
+path = "rust/tests/test_changeset.rs"
+
+[[test]]
+name = "test_checker"
+path = "rust/tests/test_checker.rs"
+
+[[test]]
+name = "test_cli"
+path = "rust/tests/test_cli.rs"
+
+[[test]]
+name = "test_contested"
+path = "rust/tests/test_contested.rs"
+
+[[test]]
+name = "test_json"
+path = "rust/tests/test_json.rs"
+
+[[test]]
+name = "test_pilot"
+path = "rust/tests/test_pilot.rs"
+
+[[test]]
+name = "test_render"
+path = "rust/tests/test_render.rs"
+
+[[test]]
+name = "test_review"
+path = "rust/tests/test_review.rs"
+
+[[test]]
+name = "test_scan"
+path = "rust/tests/test_scan.rs"
+
+[[test]]
+name = "test_setup"
+path = "rust/tests/test_setup.rs"
+
+[[test]]
+name = "test_verdicts"
+path = "rust/tests/test_verdicts.rs"
+
+[dependencies]
+num-bigint = "0.4"
+num-rational = "0.4"
+num-traits = "0.2"
+
+[dev-dependencies]
+num-bigint = "0.4"

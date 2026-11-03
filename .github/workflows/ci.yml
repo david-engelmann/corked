@@ -16,3 +16,13 @@ jobs:
         run: |
           python3 -m pip install pytest -q
           python3 -m pytest tests -q
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: "1.91.1"
+          components: "rustfmt, clippy"
+      - name: Rust format
+        run: cargo fmt --check
+      - name: Rust clippy
+        run: cargo clippy --all-targets -- -D warnings
+      - name: Rust tests
+        run: cargo test
