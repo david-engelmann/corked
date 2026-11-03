@@ -1,0 +1,241 @@
+//! The one deterministic rendering of a review, shared by every
+//! command.
+
+use crate::changeset::{FileResult, Judgements};
+use crate::checker::SHAPES;
+use crate::json::{JString, JsonValue};
+use crate::review::{validate_review, verdict_for};
+use crate::verdicts::{is_contested, line_outcome, reason_for, verdict_outcome};
+
+/// Read a text field of a valid review or entry as the string
+/// it stands for.
+fn field_text(value: &JsonValue, field: &str) -> String {
+    value
+        .get(field)
+        .and_then(|found| found.as_jstring())
+        .and_then(|text| text.to_rust_string())
+        .unwrap_or_default()
+}
+
+/// The label a review renders under. A label that cannot be
+/// printed, holding an unpaired surrogate or a line break, and
+/// a review holding no usable label, render under the unnamed
+/// review label.
+fn label_for(review: &JsonValue) -> String {
+    if let Some(text) = review
+        .get("diff_label")
+        .and_then(|value| value.as_jstring())
+    {
+        if !text.is_blank() && !text.holds_unpaired_surrogate() && !text.holds_line_break() {
+            if let Some(label) = text.to_rust_string() {
+                return label;
+            }
+        }
+    }
+    "unnamed review".to_string()
+}
+
+/// Render an invalid verdict with its defects named, as the
+/// raw output bytes. The label reads from its code units under
+/// the same handler the interpreter prints with, so a label
+/// standing for a file name byte prints as that byte, as the
+/// check command names an unreadable diff by the raw name the
+/// caller handed over. Every other line of the rendering is
+/// plain text.
+pub fn render_defects_units(label: &JString, defects: &[String]) -> Vec<u8> {
+    let mut out = Vec::new();
+    out.extend_from_slice(b"Review of ");
+    out.extend_from_slice(&label.to_surrogateescape());
+    out.push(b'\n');
+    let mut lines = vec![
+        "Verdict, invalid".to_string(),
+        format!("Defects, {}", defects.len()),
+    ];
+    lines.extend(defects.iter().map(|defect| format!("Defect, {defect}")));
+    out.extend_from_slice((lines.join("\n") + "\n").as_bytes());
+    out
+}
+
+/// Render an invalid verdict with its defects named.
+pub fn render_defects(label: &str, defects: &[String]) -> String {
+    let bytes = render_defects_units(&JString::from_text(label), defects);
+    String::from_utf8(bytes).expect("a text label renders as text")
+}
+
+/// Render a review. The same review always renders byte
+/// identical.
+pub fn render_review(review: &JsonValue) -> String {
+    let defects = validate_review(review);
+    let label = label_for(review);
+    if !defects.is_empty() {
+        return render_defects(&label, &defects);
+    }
+    let verdict = verdict_for(review);
+    let objections = review
+        .get("objections")
+        .and_then(|value| value.as_array())
+        .map(|items| items.len())
+        .unwrap_or(0);
+    let mut lines = vec![
+        format!("Review of {label}"),
+        format!("Verdict, {verdict}"),
+        format!("Objections, {objections}"),
+    ];
+    if let Some(items) = review.get("objections").and_then(|value| value.as_array()) {
+        for (index, objection) in items.iter().enumerate() {
+            lines.push(String::new());
+            lines.push(format!(
+                "Objection {}, {}",
+                index + 1,
+                field_text(objection, "category")
+            ));
+            lines.push(format!("Flaw, {}", field_text(objection, "flaw")));
+            lines.push(format!("Standard, {}", field_text(objection, "standard")));
+            lines.push(format!("Rewrite, {}", field_text(objection, "rewrite")));
+        }
+    }
+    lines.join("\n") + "\n"
+}
+
+/// Render a malformed change set with its defects named.
+pub fn render_set_defects(defects: &[String]) -> String {
+    let mut lines = vec![
+        "Change set review".to_string(),
+        "Verdict, invalid".to_string(),
+        format!("Defects, {}", defects.len()),
+    ];
+    lines.extend(defects.iter().map(|defect| format!("Defect, {defect}")));
+    lines.join("\n") + "\n"
+}
+
+/// Render a set review from the per entry results.
+///
+/// The results hold one entry per file, with the judgements its
+/// diff raised and its borderline blocks under CK-8. When a
+/// flagged line is contested under CK-9 a contested section
+/// stands before the summary and the summary counts the
+/// contested lines. The same results always render byte
+/// identical, and results holding no flags render exactly as
+/// judgement only results render.
+pub fn render_set_review(results: &[FileResult]) -> String {
+    let mut lines = vec![
+        "Change set review".to_string(),
+        format!("Files, {}", results.len()),
+    ];
+    let mut total = 0usize;
+    let mut counts: Vec<(&'static str, usize)> = Vec::new();
+    let mut worst: Vec<(&str, usize)> = Vec::new();
+    let mut flag_total = 0usize;
+    let mut judged_stickler = 0usize;
+    let mut judged_clean = 0usize;
+    let mut judged_unjudged = 0usize;
+    let mut contested: Vec<(
+        &str,
+        usize,
+        &crate::checker::Flag,
+        &[crate::verdicts::VerdictEntry],
+    )> = Vec::new();
+    for result in results {
+        let name = &result.name;
+        let judgements: &Judgements = &result.judgements;
+        let blocks = &result.blocks;
+        lines.push(String::new());
+        lines.push(format!("File, {name}"));
+        if judgements.is_empty() && blocks.is_empty() {
+            lines.push("Clean".to_string());
+            continue;
+        }
+        if !judgements.is_empty() {
+            lines.push(format!("Judgements, {}", judgements.len()));
+            total += judgements.len();
+            worst.push((name, judgements.len()));
+            for (shape, _objection) in judgements {
+                match counts.iter_mut().find(|(held, _)| held == shape) {
+                    Some((_held, count)) => *count += 1,
+                    None => counts.push((shape, 1)),
+                }
+            }
+            for (index, (_shape, objection)) in judgements.iter().enumerate() {
+                lines.push(String::new());
+                lines.push(format!("Judgement {}, {}", index + 1, objection.category));
+                lines.push(format!("Flaw, {}", objection.flaw));
+                lines.push(format!("Standard, {}", objection.standard));
+                lines.push(format!("Rewrite, {}", objection.rewrite));
+            }
+        }
+        for (index, block) in blocks.iter().enumerate() {
+            let flag = &block.flag;
+            let entries = &block.verdicts;
+            flag_total += 1;
+            let outcome = line_outcome(entries);
+            match outcome {
+                "stickler" => judged_stickler += 1,
+                "clean" => judged_clean += 1,
+                _ => judged_unjudged += 1,
+            }
+            if is_contested(entries) {
+                contested.push((name, index + 1, flag, entries));
+            }
+            lines.push(String::new());
+            lines.push(format!("Borderline {}, {}", index + 1, flag.pattern));
+            lines.push(format!("Line, {}", flag.content));
+            lines.push(format!("Shape reading, {}", flag.reading));
+            for entry in entries {
+                if verdict_outcome(entry) == "abstained" {
+                    lines.push(format!("Verdict, {}, abstained", entry.model));
+                } else {
+                    lines.push(format!("Verdict, {}, {}", entry.model, entry.choice));
+                }
+                lines.push(format!("Reason, {}", reason_for(entry)));
+            }
+            if outcome == "unjudged" {
+                lines.push("Unjudged".to_string());
+            }
+        }
+    }
+    if !contested.is_empty() {
+        lines.push(String::new());
+        lines.push("Contested lines".to_string());
+        for (name, index, flag, entries) in &contested {
+            lines.push(String::new());
+            lines.push(format!("File, {name}"));
+            lines.push(format!("Borderline {index}, {}", flag.pattern));
+            lines.push(format!("Line, {}", flag.content));
+            for entry in *entries {
+                lines.push(format!(
+                    "Verdict, {}, {}",
+                    entry.model,
+                    verdict_outcome(entry)
+                ));
+            }
+        }
+    }
+    lines.push(String::new());
+    lines.push("Summary".to_string());
+    lines.push(format!("Judgements, {total}"));
+    for shape in SHAPES {
+        if let Some((_held, count)) = counts.iter().find(|(held, _)| *held == shape) {
+            if *count > 0 {
+                lines.push(format!("Shape, {shape}, {count}"));
+            }
+        }
+    }
+    if flag_total > 0 {
+        lines.push(format!("Borderline, {flag_total}"));
+        lines.push(format!(
+            "Verdict lines, stickler {judged_stickler}, \
+             clean {judged_clean}"
+        ));
+        lines.push(format!("Unjudged, {judged_unjudged}"));
+        lines.push(format!("Contested, {}", contested.len()));
+    }
+    if !worst.is_empty() {
+        lines.push("Files with judgements, worst first".to_string());
+        let mut ordered = worst.clone();
+        ordered.sort_by(|left, right| right.1.cmp(&left.1).then_with(|| left.0.cmp(right.0)));
+        for (name, count) in ordered {
+            lines.push(format!("Worst, {name}, {count}"));
+        }
+    }
+    lines.join("\n") + "\n"
+}
