@@ -94,8 +94,14 @@ fn readme_reports_the_round_4_standing() {
 fn ci_runs_the_same_gate_as_the_local_gate() {
     let text = read(".github/workflows/ci.yml");
     let live = live_lines(&text);
-    assert!(live.contains("python3 scripts/codepoint_scan.py"));
-    assert!(live.contains("python3 -m pytest tests -q"));
+    // Adjusted with the removal slice of PORT-9, as the named
+    // mechanical consequence of the Python gate leaving CI. The
+    // two pins that read the Python commands in CI are replaced
+    // by pins that read their absence, so the cargo gate stands
+    // alone under guard rather than merely unopposed.
+    assert!(!live.contains("python3 scripts/codepoint_scan.py"));
+    assert!(!live.contains("python3 -m pytest tests -q"));
+    assert!(!live.contains("setup-python"));
 }
 
 /// The live text of a file, comment text removed the way the
@@ -111,11 +117,14 @@ fn live_lines(text: &str) -> String {
 #[test]
 fn readme_reports_the_rust_port() {
     let text = read("README.md");
-    let port_line = "- The Rust port is built and stands in review. \
-        It carries the library and the command line under rust/, \
-        translated test for test from the Python suite, with the \
-        Python tree standing as the behavior spec until the port \
-        verifies.";
+    // Adjusted with the removal slice of PORT-9, as the named
+    // mechanical consequence of the port landing. The pinned
+    // line changes from the in review wording to the landed
+    // wording the slice writes.
+    let port_line = "- The Rust port has landed. \
+        It carries the behavior the Python package carried, \
+        checked against the same goldens, and the Python tree \
+        stands removed under PORT-9.";
     assert!(
         text.lines().any(|line| line == port_line),
         "the port status line stands"
@@ -126,7 +135,7 @@ fn readme_reports_the_rust_port() {
 fn contract_carries_the_port_obligations() {
     let text = read("CONTRACT.md");
     for oid in [
-        "PORT-1", "PORT-2", "PORT-3", "PORT-4", "PORT-5", "PORT-6", "PORT-7", "PORT-8",
+        "PORT-1", "PORT-2", "PORT-3", "PORT-4", "PORT-5", "PORT-6", "PORT-7", "PORT-8", "PORT-9",
     ] {
         assert!(text.contains(oid), "obligation {oid}");
     }
