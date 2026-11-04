@@ -24,7 +24,7 @@ fn agents_carries_the_canonical_marker() {
 #[test]
 fn readme_states_the_closed_round_count() {
     let text = read("README.md");
-    assert!(text.contains("Closed perfection rounds, 5 of 100"));
+    assert!(text.contains("Closed perfection rounds, 4 of 100"));
 }
 
 #[test]
@@ -89,21 +89,19 @@ fn readme_reports_the_round_4_standing() {
     assert!(text.lines().any(|line| line == slice_line));
     // Adjusted with the Round 5 slice, as the named mechanical
     // consequence of slice 6 standing in review. The count of
-    // slices standing in review was one while Round 5 was
-    // built, until the Round 5 closure landed slice 6 and the
-    // count returned to zero. The Round 5 pin below holds the
-    // standing line and the slice line themselves.
-    assert_eq!(text.matches("built and in review").count(), 0);
+    // slices standing in review is one while Round 5 is built,
+    // and the Round 5 pin below holds the slice line itself.
+    assert_eq!(text.matches("built and in review").count(), 1);
 }
 
 #[test]
-fn readme_reports_the_round_5_standing() {
+fn readme_reports_the_round_5_slice() {
     let text = read("README.md");
-    let standing = "- Contract, CK-11 and CK-12 met. They stand in full form in \
-        CONTRACT.md, and Round 5 closed on the merged slice 6 after \
-        three reviews, a repair pass, and an approving owner gate.";
+    let standing = "- Contract, CK-11 and CK-12 now stand in full form in \
+        CONTRACT.md. Their standing is not claimed here, as Round 5 \
+        has not closed.";
     assert!(text.lines().any(|line| line == standing));
-    let slice_line = "- Slice 6 has landed. It carries the \
+    let slice_line = "- Slice 6 is built and in review. It carries the \
         judging census over a stated collection of recorded review \
         inputs, with the census command beside check, render, and \
         review, and the census example under examples standing over \
@@ -111,7 +109,7 @@ fn readme_reports_the_round_5_standing() {
         example named as constructed, with the suite running offline \
         on the recorded and constructed sets.";
     assert!(text.lines().any(|line| line == slice_line));
-    assert!(text.contains("Closed perfection rounds, 5 of 100"));
+    assert!(text.contains("Closed perfection rounds, 4 of 100"));
 }
 
 #[test]
