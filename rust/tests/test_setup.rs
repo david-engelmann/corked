@@ -87,7 +87,29 @@ fn readme_reports_the_round_4_standing() {
         the suite running offline on the recorded pilot and the \
         constructed example.";
     assert!(text.lines().any(|line| line == slice_line));
-    assert_eq!(text.matches("built and in review").count(), 0);
+    // Adjusted with the Round 5 slice, as the named mechanical
+    // consequence of slice 6 standing in review. The count of
+    // slices standing in review is one while Round 5 is built,
+    // and the Round 5 pin below holds the slice line itself.
+    assert_eq!(text.matches("built and in review").count(), 1);
+}
+
+#[test]
+fn readme_reports_the_round_5_slice() {
+    let text = read("README.md");
+    let standing = "- Contract, CK-11 and CK-12 now stand in full form in \
+        CONTRACT.md. Their standing is not claimed here, as Round 5 \
+        has not closed.";
+    assert!(text.lines().any(|line| line == standing));
+    let slice_line = "- Slice 6 is built and in review. It carries the \
+        judging census over a stated collection of recorded review \
+        inputs, with the census command beside check, render, and \
+        review, and the census example under examples standing over \
+        the Round 2 set, the pilot set, and the constructed Round 4 \
+        example named as constructed, with the suite running offline \
+        on the recorded and constructed sets.";
+    assert!(text.lines().any(|line| line == slice_line));
+    assert!(text.contains("Closed perfection rounds, 4 of 100"));
 }
 
 #[test]

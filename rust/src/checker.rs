@@ -806,13 +806,9 @@ fn call_default_rewrite(chars: &[char], def_match: &DefMatch) -> Option<String> 
 /// or return None when the line holds no single literal
 /// assignment.
 fn class_attribute_objection(chars: &[char]) -> Option<Objection> {
-    let (name, rhs): (String, &[char]) = if let Some(found) = match_annotated(chars) {
-        (found.name(chars), strip_chars(&chars[found.rhs_start..]))
-    } else if let Some(found) = match_assignment(chars) {
-        (found.name(chars), strip_chars(&chars[found.rhs_start..]))
-    } else {
-        return None;
-    };
+    let found = match_annotated(chars).or_else(|| match_assignment(chars))?;
+    let (name, rhs): (String, &[char]) =
+        (found.name(chars), strip_chars(&chars[found.rhs_start..]));
     if !is_single_literal(rhs) {
         return None;
     }

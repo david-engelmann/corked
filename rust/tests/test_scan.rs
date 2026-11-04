@@ -79,6 +79,33 @@ fn dashes_only_under_an_ignored_directory_pass_the_scan() {
 }
 
 #[test]
+fn dashes_only_under_the_target_directory_pass_the_scan() {
+    // Planted with the Round 5 slice, whose CI shape gate
+    // builds with the default in repo target directory and
+    // then scans the built tree. A compiled test binary under
+    // target holds the planted dash fixtures of this suite as
+    // bytes, in an extensionless file the scan would otherwise
+    // read, so the build directory stands ignored beside the
+    // environment and build directories already named.
+    let counts = planted_tree(
+        "ignored-target",
+        &[
+            (
+                "target/debug/deps/test_binary",
+                format!("a note {EM_DASH} and {EN_DASH}\n"),
+            ),
+            (
+                "target/debug/fingerprint.json",
+                format!("a note {EM_DASH}\n"),
+            ),
+        ],
+    );
+    assert!(counts.is_clean());
+    assert_eq!(counts.em_dashes, 0);
+    assert_eq!(counts.en_dashes, 0);
+}
+
+#[test]
 fn a_clean_tree_passes_the_scan() {
     let counts = planted_tree(
         "clean",

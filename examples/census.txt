@@ -1,0 +1,69 @@
+Census
+Sets, 3
+
+Set, round 2 set
+Files, 3
+Judgements, 5
+Shape, bare except, 1
+Shape, print call, 1
+Shape, mutable default, 1
+Shape, placeholder name, 0
+Shape, call default, 1
+Shape, class attribute, 1
+Borderline, 0
+Pattern, near placeholder name, 0
+Pattern, broad handler, 0
+Pattern, shared member default, 0
+Verdicts, none recorded
+
+Set, pilot set
+Files, 3
+Judgements, 0
+Shape, bare except, 0
+Shape, print call, 0
+Shape, mutable default, 0
+Shape, placeholder name, 0
+Shape, call default, 0
+Shape, class attribute, 0
+Borderline, 12
+Pattern, near placeholder name, 5
+Pattern, broad handler, 3
+Pattern, shared member default, 4
+Verdict lines, stickler 11, clean 0
+Unjudged, 1
+Contested, 0
+
+Set, constructed round 4 example
+Files, 2
+Judgements, 0
+Shape, bare except, 0
+Shape, print call, 0
+Shape, mutable default, 0
+Shape, placeholder name, 0
+Shape, call default, 0
+Shape, class attribute, 0
+Borderline, 6
+Pattern, near placeholder name, 4
+Pattern, broad handler, 1
+Pattern, shared member default, 1
+Verdict lines, stickler 3, clean 2
+Unjudged, 1
+Contested, 2
+
+Total
+Sets, 3
+Files, 8
+Judgements, 5
+Shape, bare except, 1
+Shape, print call, 1
+Shape, mutable default, 1
+Shape, placeholder name, 0
+Shape, call default, 1
+Shape, class attribute, 1
+Borderline, 18
+Pattern, near placeholder name, 9
+Pattern, broad handler, 4
+Pattern, shared member default, 5
+Verdict lines, stickler 14, clean 2
+Unjudged, 2
+Contested, 2

@@ -21,6 +21,8 @@ Seeded in October 2026. Setup has landed, and Rounds 1 to 4 have closed, with al
 - Slice 4 has landed. It carries the borderline flagging with its three patterns, the verdict seat reading both decision model routes, the recorded verdict path through the set review, and the recorded borderline pilot under examples, with the suite running offline on the recorded envelopes.
 - Contract, CK-9 and CK-10 met. They stand in full form in CONTRACT.md with the Round 4 repair amendments, and Round 4 closed on the merged slice 5 after three reviews, a repair pass, and an approving re-review.
 - Slice 5 has landed. It carries the contested line reading of the set review, with the contested section before the summary and the contested count in the summary, and the constructed contested example under examples, with the suite running offline on the recorded pilot and the constructed example.
+- Contract, CK-11 and CK-12 now stand in full form in CONTRACT.md. Their standing is not claimed here, as Round 5 has not closed.
+- Slice 6 is built and in review. It carries the judging census over a stated collection of recorded review inputs, with the census command beside check, render, and review, and the census example under examples standing over the Round 2 set, the pilot set, and the constructed Round 4 example named as constructed, with the suite running offline on the recorded and constructed sets.
 - The Rust port has landed. It carries the behavior the Python package carried, checked against the same goldens, and the Python tree stands removed under PORT-9.
 - Local gate, cargo test, cargo fmt --check, and cargo clippy --all-targets -- -D warnings. CI runs the same commands.
 
