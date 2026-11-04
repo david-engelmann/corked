@@ -1,8 +1,9 @@
 //! The one deterministic rendering of a review, shared by every
 //! command.
 
+use crate::census::{Census, Tally};
 use crate::changeset::{FileResult, Judgements};
-use crate::checker::SHAPES;
+use crate::checker::{BORDERLINE_PATTERNS, SHAPES};
 use crate::json::{JString, JsonValue};
 use crate::review::{validate_review, verdict_for};
 use crate::verdicts::{is_contested, line_outcome, reason_for, verdict_outcome};
@@ -97,14 +98,91 @@ pub fn render_review(review: &JsonValue) -> String {
     lines.join("\n") + "\n"
 }
 
-/// Render a malformed change set with its defects named.
-pub fn render_set_defects(defects: &[String]) -> String {
+/// Render a malformed reading with its defects named, under
+/// the head line its surface states.
+fn render_defects_headed(head: &str, defects: &[String]) -> String {
     let mut lines = vec![
-        "Change set review".to_string(),
+        head.to_string(),
         "Verdict, invalid".to_string(),
         format!("Defects, {}", defects.len()),
     ];
     lines.extend(defects.iter().map(|defect| format!("Defect, {defect}")));
+    lines.join("\n") + "\n"
+}
+
+/// Render a malformed change set with its defects named.
+pub fn render_set_defects(defects: &[String]) -> String {
+    render_defects_headed("Change set review", defects)
+}
+
+/// Render a malformed census with its defects named.
+pub fn render_census_defects(defects: &[String]) -> String {
+    render_defects_headed("Census", defects)
+}
+
+/// Push the three judged lines onto a rendering.
+///
+/// The forms are stated once here and shared by the set
+/// review summary and the census tally, so the two surfaces
+/// cannot drift apart.
+fn push_judged_lines(
+    lines: &mut Vec<String>,
+    stickler: usize,
+    clean: usize,
+    unjudged: usize,
+    contested: usize,
+) {
+    lines.push(format!("Verdict lines, stickler {stickler}, clean {clean}"));
+    lines.push(format!("Unjudged, {unjudged}"));
+    lines.push(format!("Contested, {contested}"));
+}
+
+/// Push the count lines of one tally onto the lines of a
+/// census rendering.
+///
+/// The judged lines stand in the shared judged forms when a
+/// verdict stands in the tally, and the none recorded line
+/// stands in their place when none does, under CK-11.
+fn push_tally(lines: &mut Vec<String>, tally: &Tally) {
+    lines.push(format!("Files, {}", tally.files));
+    lines.push(format!("Judgements, {}", tally.judgements));
+    for (index, shape) in SHAPES.iter().enumerate() {
+        lines.push(format!("Shape, {shape}, {}", tally.shapes[index]));
+    }
+    lines.push(format!("Borderline, {}", tally.borderline));
+    for (index, pattern) in BORDERLINE_PATTERNS.iter().enumerate() {
+        lines.push(format!("Pattern, {pattern}, {}", tally.patterns[index]));
+    }
+    if tally.verdicts_stand {
+        push_judged_lines(
+            lines,
+            tally.stickler,
+            tally.clean,
+            tally.unjudged,
+            tally.contested,
+        );
+    } else {
+        lines.push("Verdicts, none recorded".to_string());
+    }
+}
+
+/// Render a census reading under CK-11.
+///
+/// The reading states each set of the collection in its own
+/// block in the order the collection states them, and a total
+/// block after the last set. The same census always renders
+/// byte identical.
+pub fn render_census(census: &Census) -> String {
+    let mut lines = vec!["Census".to_string(), format!("Sets, {}", census.sets.len())];
+    for set in &census.sets {
+        lines.push(String::new());
+        lines.push(format!("Set, {}", set.label));
+        push_tally(&mut lines, &set.tally);
+    }
+    lines.push(String::new());
+    lines.push("Total".to_string());
+    lines.push(format!("Sets, {}", census.sets.len()));
+    push_tally(&mut lines, &census.total);
     lines.join("\n") + "\n"
 }
 
@@ -222,12 +300,13 @@ pub fn render_set_review(results: &[FileResult]) -> String {
     }
     if flag_total > 0 {
         lines.push(format!("Borderline, {flag_total}"));
-        lines.push(format!(
-            "Verdict lines, stickler {judged_stickler}, \
-             clean {judged_clean}"
-        ));
-        lines.push(format!("Unjudged, {judged_unjudged}"));
-        lines.push(format!("Contested, {}", contested.len()));
+        push_judged_lines(
+            &mut lines,
+            judged_stickler,
+            judged_clean,
+            judged_unjudged,
+            contested.len(),
+        );
     }
     if !worst.is_empty() {
         lines.push("Files with judgements, worst first".to_string());

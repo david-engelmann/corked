@@ -5,6 +5,7 @@
 //! carries the command line surface over the library. The Python
 //! package under src is the specification this port reproduces.
 
+pub mod census;
 pub mod changeset;
 pub mod checker;
 pub mod cli;

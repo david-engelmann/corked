@@ -20,6 +20,10 @@ name = "test_borderline"
 path = "rust/tests/test_borderline.rs"
 
 [[test]]
+name = "test_census"
+path = "rust/tests/test_census.rs"
+
+[[test]]
 name = "test_changeset"
 path = "rust/tests/test_changeset.rs"
 

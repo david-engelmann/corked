@@ -17,13 +17,19 @@ use std::path::Path;
 const SCANNED_SUFFIXES: [&str; 8] = ["md", "txt", "py", "json", "toml", "yml", "yaml", "rs"];
 
 /// The directory names the scan never enters. A directory whose
-/// name ends in .egg-info stands ignored beside these.
-const IGNORED_DIRS: [&str; 7] = [
+/// name ends in .egg-info stands ignored beside these. The
+/// target directory of the crate stands among them, because a
+/// build leaves compiled test binaries under it whose bytes
+/// hold the planted dash fixtures of the scan tests themselves,
+/// and a scan over a built tree would read its own fixtures as
+/// findings.
+const IGNORED_DIRS: [&str; 8] = [
     ".git",
     ".venv",
     "venv",
     "dist",
     "build",
+    "target",
     "node_modules",
     "__pycache__",
 ];

@@ -567,9 +567,15 @@ fn run_units(args: &[&[u8]]) -> ByteOutcome {
     cli_main_units(&owned)
 }
 
+// Adjusted with the Round 5 slice, as the named mechanical
+// consequence of CK-12 adding the census command to the
+// command line. The usage text gains the census line, so the
+// pinned bytes gain it too, and the three assertions standing
+// on this constant hold the new text.
 const USAGE_BYTES: &[u8] = b"Usage, stickler check DIFF_FILE\n\
     Usage, stickler render REVIEW_JSON\n\
-    Usage, stickler review SET_JSON\n";
+    Usage, stickler review SET_JSON\n\
+    Usage, stickler census CENSUS_JSON\n";
 
 #[test]
 fn check_names_a_readable_raw_byte_diff_by_its_surrogate_defect() {
