@@ -92,8 +92,11 @@ fn readme_reports_the_round_4_standing() {
     // slices standing in review was one while Round 5 was
     // built, until the Round 5 closure landed slice 6 and the
     // count returned to zero. The Round 5 pin below holds the
-    // standing line and the slice line themselves.
-    assert_eq!(text.matches("built and in review").count(), 0);
+    // standing line and the slice line themselves. Adjusted
+    // again with the Round 6 slice, as the named mechanical
+    // consequence of slice 7 standing in review, so the count
+    // stands at one while Round 6 is built.
+    assert_eq!(text.matches("built and in review").count(), 1);
 }
 
 #[test]
@@ -110,6 +113,23 @@ fn readme_reports_the_round_5_standing() {
         the Round 2 set, the pilot set, and the constructed Round 4 \
         example named as constructed, with the suite running offline \
         on the recorded and constructed sets.";
+    assert!(text.lines().any(|line| line == slice_line));
+    assert!(text.contains("Closed perfection rounds, 5 of 100"));
+}
+
+#[test]
+fn readme_reports_the_round_6_standing() {
+    let text = read("README.md");
+    let standing = "- Contract, CK-13 and CK-14 stated. They stand in full form in \
+        CONTRACT.md, and Round 6 stands open on slice 7 in review.";
+    assert!(text.lines().any(|line| line == standing));
+    let slice_line = "- Slice 7 is built and in review. It carries the \
+        rejudging run over the pilot flags through the verdict seat's \
+        Jev route, recorded as the rejudged set under examples, and \
+        the rejudged ledger reading over a stated pair of recorded \
+        sets, with the rejudged command beside check, render, review, \
+        and census, with the suite running offline on the recorded \
+        envelopes and sets.";
     assert!(text.lines().any(|line| line == slice_line));
     assert!(text.contains("Closed perfection rounds, 5 of 100"));
 }

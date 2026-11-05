@@ -1,0 +1,68 @@
+Rejudged
+First, pilot set
+Second, rejudged set
+
+harvest.py, line 6, near placeholder name
+First, unjudged
+Second, stickler
+Changed
+
+harvest.py, line 7, near placeholder name
+First, stickler
+Second, stickler
+Held
+
+harvest.py, line 12, broad handler
+First, stickler
+Second, stickler
+Held
+
+harvest.py, line 18, broad handler
+First, stickler
+Second, stickler
+Held
+
+windows.py, line 6, shared member default
+First, stickler
+Second, stickler
+Held
+
+windows.py, line 10, shared member default
+First, stickler
+Second, stickler
+Held
+
+windows.py, line 14, shared member default
+First, stickler
+Second, stickler
+Held
+
+windows.py, line 18, shared member default
+First, stickler
+Second, stickler
+Held
+
+sorting.py, line 6, near placeholder name
+First, stickler
+Second, stickler
+Held
+
+sorting.py, line 11, near placeholder name
+First, stickler
+Second, unjudged
+Changed
+
+sorting.py, line 12, near placeholder name
+First, stickler
+Second, stickler
+Held
+
+sorting.py, line 15, broad handler
+First, stickler
+Second, stickler
+Held
+
+Inputs read, 24
+Standing in both, 12
+Held, 10
+Changed, 2
