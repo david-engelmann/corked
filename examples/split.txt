@@ -1,0 +1,68 @@
+Split
+First route, jev-1.13.0
+Second route, openai/gpt-6-luna
+
+harvest.py, line 6, near placeholder name
+First route, unjudged
+Second route, unjudged
+Joint, unjudged
+
+harvest.py, line 7, near placeholder name
+First route, stickler
+Second route, unjudged
+Joint, stickler
+
+harvest.py, line 12, broad handler
+First route, stickler
+Second route, stickler
+Joint, stickler
+
+harvest.py, line 18, broad handler
+First route, stickler
+Second route, stickler
+Joint, stickler
+
+windows.py, line 6, shared member default
+First route, stickler
+Second route, stickler
+Joint, stickler
+
+windows.py, line 10, shared member default
+First route, stickler
+Second route, stickler
+Joint, stickler
+
+windows.py, line 14, shared member default
+First route, stickler
+Second route, stickler
+Joint, stickler
+
+windows.py, line 18, shared member default
+First route, stickler
+Second route, stickler
+Joint, stickler
+
+sorting.py, line 6, near placeholder name
+First route, stickler
+Second route, stickler
+Joint, stickler
+
+sorting.py, line 11, near placeholder name
+First route, unjudged
+Second route, stickler
+Joint, stickler
+
+sorting.py, line 12, near placeholder name
+First route, stickler
+Second route, stickler
+Joint, stickler
+
+sorting.py, line 15, broad handler
+First route, stickler
+Second route, stickler
+Joint, stickler
+
+Flags read, 12
+Routes agree, 10
+Routes differ, 2
+Joint differs from a route, 2

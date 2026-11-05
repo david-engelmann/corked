@@ -1,0 +1,182 @@
+{
+  "routes": [
+    "jev-1.13.0",
+    "openai/gpt-6-luna"
+  ],
+  "change_set": {
+    "files": [
+      {
+        "diff": "--- a/harvest.py\n+++ b/harvest.py\n@@ -1,4 +1,8 @@\n from .store import load_entries, save_entries\n \n+data = load_entries()\n+temp = []\n+\n def first_entry():\n     try:\n         return data[0]\n+    except BaseException:\n+        return None\n@@ -9,4 +13,7 @@\n def last_entry():\n     try:\n         return data[-1]\n+    except BaseException:\n+        return None\n+\n+count = len(data)\n",
+        "file": "harvest.py",
+        "verdicts": [
+          {
+            "line": 6,
+            "pattern": "near placeholder name",
+            "model": "jev-1.13.0",
+            "choice": "stickler",
+            "confidence": 0.32
+          },
+          {
+            "line": 7,
+            "pattern": "near placeholder name",
+            "model": "jev-1.13.0",
+            "choice": "stickler",
+            "confidence": 0.68
+          },
+          {
+            "line": 12,
+            "pattern": "broad handler",
+            "model": "jev-1.13.0",
+            "choice": "stickler",
+            "confidence": 1.0
+          },
+          {
+            "line": 12,
+            "pattern": "broad handler",
+            "model": "openai/gpt-6-luna",
+            "choice": "stickler",
+            "confidence": 0.99
+          },
+          {
+            "line": 18,
+            "pattern": "broad handler",
+            "model": "jev-1.13.0",
+            "choice": "stickler",
+            "confidence": 1.0
+          },
+          {
+            "line": 18,
+            "pattern": "broad handler",
+            "model": "openai/gpt-6-luna",
+            "choice": "stickler",
+            "confidence": 0.99
+          }
+        ]
+      },
+      {
+        "diff": "--- a/windows.py\n+++ b/windows.py\n@@ -1,2 +1,13 @@\n-def plan(start):\n-    return start\n+def plan(start, cache=([],)):\n+    return start\n+\n+\n+def grid(rows, defaults=({\"unit\": \"m\"}, 2)):\n+    return rows * defaults[1]\n+\n+\n+def pack(items, pair=([], {})):\n+    return items + pair[0]\n+\n+\n+def pick(mode, seen=({1, 2},)):\n+    return mode in seen[0]\n",
+        "file": "windows.py",
+        "verdicts": [
+          {
+            "line": 6,
+            "pattern": "shared member default",
+            "model": "jev-1.13.0",
+            "choice": "stickler",
+            "confidence": 0.96
+          },
+          {
+            "line": 6,
+            "pattern": "shared member default",
+            "model": "openai/gpt-6-luna",
+            "choice": "stickler",
+            "confidence": 0.99
+          },
+          {
+            "line": 10,
+            "pattern": "shared member default",
+            "model": "jev-1.13.0",
+            "choice": "stickler",
+            "confidence": 0.76
+          },
+          {
+            "line": 10,
+            "pattern": "shared member default",
+            "model": "openai/gpt-6-luna",
+            "choice": "stickler",
+            "confidence": 0.99
+          },
+          {
+            "line": 14,
+            "pattern": "shared member default",
+            "model": "jev-1.13.0",
+            "choice": "stickler",
+            "confidence": 0.98
+          },
+          {
+            "line": 14,
+            "pattern": "shared member default",
+            "model": "openai/gpt-6-luna",
+            "choice": "stickler",
+            "confidence": 0.99
+          },
+          {
+            "line": 18,
+            "pattern": "shared member default",
+            "model": "jev-1.13.0",
+            "choice": "stickler",
+            "confidence": 0.74
+          },
+          {
+            "line": 18,
+            "pattern": "shared member default",
+            "model": "openai/gpt-6-luna",
+            "choice": "stickler",
+            "confidence": 0.99
+          }
+        ]
+      },
+      {
+        "diff": "--- a/sorting.py\n+++ b/sorting.py\n@@ -1,2 +1,11 @@\n-def rank(rows):\n-    return sorted(rows)\n+def temp(rows):\n+    return sorted(rows)\n+\n+\n+def merge(left, right):\n+    data, extra = left, right\n+    tmp: list = []\n+    try:\n+        return data + extra\n+    except BaseException as err:\n+        raise err\n",
+        "file": "sorting.py",
+        "verdicts": [
+          {
+            "line": 6,
+            "pattern": "near placeholder name",
+            "model": "jev-1.13.0",
+            "choice": "stickler",
+            "confidence": 0.78
+          },
+          {
+            "line": 6,
+            "pattern": "near placeholder name",
+            "model": "openai/gpt-6-luna",
+            "choice": "stickler",
+            "confidence": 0.97
+          },
+          {
+            "line": 11,
+            "pattern": "near placeholder name",
+            "model": "jev-1.13.0",
+            "choice": "stickler",
+            "confidence": 0.2
+          },
+          {
+            "line": 11,
+            "pattern": "near placeholder name",
+            "model": "openai/gpt-6-luna",
+            "choice": "stickler",
+            "confidence": 0.88
+          },
+          {
+            "line": 12,
+            "pattern": "near placeholder name",
+            "model": "jev-1.13.0",
+            "choice": "stickler",
+            "confidence": 0.78
+          },
+          {
+            "line": 12,
+            "pattern": "near placeholder name",
+            "model": "openai/gpt-6-luna",
+            "choice": "stickler",
+            "confidence": 0.88
+          },
+          {
+            "line": 15,
+            "pattern": "broad handler",
+            "model": "jev-1.13.0",
+            "choice": "stickler",
+            "confidence": 0.98
+          },
+          {
+            "line": 15,
+            "pattern": "broad handler",
+            "model": "openai/gpt-6-luna",
+            "choice": "stickler",
+            "confidence": 0.99
+          }
+        ]
+      }
+    ]
+  }
+}

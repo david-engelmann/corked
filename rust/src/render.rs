@@ -7,6 +7,7 @@ use crate::checker::{BORDERLINE_PATTERNS, SHAPES};
 use crate::json::{JString, JsonValue};
 use crate::rejudged::Rejudged;
 use crate::review::{validate_review, verdict_for};
+use crate::split::Split;
 use crate::verdicts::{is_contested, line_outcome, reason_for, verdict_outcome};
 
 /// Read a text field of a valid review or entry as the string
@@ -154,6 +155,45 @@ pub fn render_rejudged(reading: &Rejudged) -> String {
     lines.push(format!("Standing in both, {}", reading.pairs.len()));
     lines.push(format!("Held, {}", reading.held));
     lines.push(format!("Changed, {}", reading.changed));
+    lines.join("\n") + "\n"
+}
+
+/// Render a malformed split file with its defects named.
+pub fn render_split_defects(defects: &[String]) -> String {
+    render_defects_headed("Split", defects)
+}
+
+/// Render a split reading under CK-16.
+///
+/// The reading names its two routes in the order the file
+/// names them, states each flag in its own group with the
+/// judgement of each route alone and the joint judgement,
+/// and closes with its counts. The same file always
+/// renders byte identical.
+pub fn render_split(reading: &Split) -> String {
+    let mut lines = vec![
+        "Split".to_string(),
+        format!("First route, {}", reading.first_route),
+        format!("Second route, {}", reading.second_route),
+    ];
+    for flag in &reading.flags {
+        lines.push(String::new());
+        lines.push(format!(
+            "{}, line {}, {}",
+            flag.file, flag.line, flag.pattern
+        ));
+        lines.push(format!("First route, {}", flag.first));
+        lines.push(format!("Second route, {}", flag.second));
+        lines.push(format!("Joint, {}", flag.joint));
+    }
+    lines.push(String::new());
+    lines.push(format!("Flags read, {}", reading.flags.len()));
+    lines.push(format!("Routes agree, {}", reading.routes_agree));
+    lines.push(format!("Routes differ, {}", reading.routes_differ));
+    lines.push(format!(
+        "Joint differs from a route, {}",
+        reading.joint_differs
+    ));
     lines.join("\n") + "\n"
 }
 

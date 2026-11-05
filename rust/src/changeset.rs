@@ -61,18 +61,63 @@ fn text_of(text: &JString) -> String {
         .unwrap_or_else(|| String::from_utf16_lossy(&text.0))
 }
 
-/// Name the defects of one entry's recorded verdicts.
+/// Return whether the verdicts of one entry are read by
+/// the change set loader, the posture of CK-8 under which
+/// an entry whose file and diff fields draw no defect has
+/// its verdicts read. The loader gates its verdict walk
+/// on this predicate, and the route check of CK-15 reads
+/// the same predicate from this home, so the posture
+/// stands once for both readers and the two cannot drift.
+pub(crate) fn entry_verdicts_are_read(entry: &JsonValue) -> bool {
+    let file_ok = match entry.get("file") {
+        Some(file) => match file.as_jstring() {
+            Some(text) => {
+                !text.is_blank() && !text.holds_unpaired_surrogate() && !text.holds_line_break()
+            }
+            None => false,
+        },
+        None => false,
+    };
+    let diff_ok = match entry.get("diff") {
+        Some(diff) => match diff.as_jstring() {
+            Some(text) => !text.holds_unpaired_surrogate(),
+            None => false,
+        },
+        None => false,
+    };
+    file_ok && diff_ok
+}
+
+/// Walk the recorded verdicts of one entry in the posture
+/// CK-8 states, naming the defects of the walk and marking
+/// the standing of each verdict in list order.
 ///
-/// The verdicts are read only for an entry whose file and diff
-/// fields drew no defect, so the flags of the entry can be
-/// computed from its diff. No defect names the value it refuses,
-/// only the position of the verdict and the rule it breaks.
-fn validate_verdicts(index: usize, entry: &JsonValue, defects: &mut Vec<String>) {
+/// A verdict stands when it is an object holding the five
+/// fields with each field in its accepted form and the
+/// walk does not refuse it as a repeat of an earlier
+/// verdict for the same line and model. A verdict naming
+/// no borderline line still stands, because the flag match
+/// is a relation the form of CK-8 does not state, and the
+/// loader names that defect beside the standing. The
+/// change set loader names the defects of this walk, and
+/// the route check of CK-15 reads the standings from this
+/// same home, so a verdict the loader already refuses
+/// draws no second defect from that rule and the two
+/// readers hold one posture between them.
+///
+/// The verdicts are read only for an entry whose file and
+/// diff fields drew no defect, so the flags of the entry
+/// can be computed from its diff. No defect names the value
+/// it refuses, only the position of the verdict and the
+/// rule it breaks.
+pub(crate) fn walk_verdicts(index: usize, entry: &JsonValue) -> (Vec<String>, Vec<bool>) {
+    let mut defects = Vec::new();
+    let mut standings = Vec::new();
     let where_ = format!("files[{index}].verdicts");
     let verdicts = entry.get("verdicts").expect("the caller read it");
     let Some(items) = verdicts.as_array() else {
         defects.push(format!("{where_} must be a list"));
-        return;
+        return (defects, standings);
     };
     let diff = entry
         .get("diff")
@@ -85,8 +130,10 @@ fn validate_verdicts(index: usize, entry: &JsonValue, defects: &mut Vec<String>)
         let vwhere = format!("{where_}[{position}]");
         if !verdict.is_object() {
             defects.push(format!("{vwhere} must be an object"));
+            standings.push(false);
             continue;
         }
+        let before = defects.len();
         for field in VERDICT_FIELDS {
             if !verdict.contains_key(field) {
                 defects.push(format!("{vwhere}.{field} is missing"));
@@ -163,6 +210,7 @@ fn validate_verdicts(index: usize, entry: &JsonValue, defects: &mut Vec<String>)
                 }
             }
         }
+        let mut stands = defects.len() == before;
         if line_ok && pattern_ok {
             let line_value = line_int.as_ref().expect("a sound line");
             let flag = flags
@@ -183,6 +231,7 @@ fn validate_verdicts(index: usize, entry: &JsonValue, defects: &mut Vec<String>)
                     model_text.clone().expect("a sound model"),
                 );
                 if seen.contains(&key) {
+                    stands = false;
                     defects.push(format!(
                         "{vwhere} repeats a verdict for the same \
                          line and model"
@@ -192,7 +241,9 @@ fn validate_verdicts(index: usize, entry: &JsonValue, defects: &mut Vec<String>)
                 }
             }
         }
+        standings.push(stands);
     }
+    (defects, standings)
 }
 
 /// Return the list of defects found in a change set. Never
@@ -214,7 +265,6 @@ pub fn load_changeset(value: &JsonValue) -> Vec<String> {
             defects.push(format!("{where_} must be an object"));
             continue;
         }
-        let before = defects.len();
         match entry.get("file") {
             None => defects.push(format!("{where_}.file is missing")),
             Some(file) => match file.as_jstring() {
@@ -239,8 +289,8 @@ pub fn load_changeset(value: &JsonValue) -> Vec<String> {
                 }
             },
         }
-        if entry.contains_key("verdicts") && defects.len() == before {
-            validate_verdicts(index, entry, &mut defects);
+        if entry.contains_key("verdicts") && entry_verdicts_are_read(entry) {
+            defects.extend(walk_verdicts(index, entry).0);
         }
     }
     defects
