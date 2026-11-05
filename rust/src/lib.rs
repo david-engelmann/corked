@@ -16,4 +16,5 @@ pub mod render;
 pub mod review;
 pub mod scan;
 pub mod sets;
+pub mod split;
 pub mod verdicts;

@@ -1,5 +1,5 @@
-//! The stickler command line. Five commands, check, render,
-//! review, census, and rejudged.
+//! The stickler command line. Six commands, check, render,
+//! review, census, rejudged, and split.
 //!
 //! The surface stands as two functions over two readings of
 //! the arguments. The binary entry, run below, collects the
@@ -23,9 +23,11 @@ use crate::json::{self, JString, JsonValue, ParseError};
 use crate::rejudged::{load_rejudged, rejudged_of};
 use crate::render::{
     render_census, render_census_defects, render_defects, render_defects_units, render_rejudged,
-    render_rejudged_defects, render_review, render_set_defects, render_set_review,
+    render_rejudged_defects, render_review, render_set_defects, render_set_review, render_split,
+    render_split_defects,
 };
 use crate::review::verdict_for;
+use crate::split::{load_split, split_of};
 use crate::verdicts::line_outcome;
 
 /// The usage text the command line answers an unrecognized
@@ -35,7 +37,8 @@ const USAGE: &str = "Usage, stickler check DIFF_FILE\n\
                      Usage, stickler render REVIEW_JSON\n\
                      Usage, stickler review SET_JSON\n\
                      Usage, stickler census CENSUS_JSON\n\
-                     Usage, stickler rejudged REJUDGED_JSON\n";
+                     Usage, stickler rejudged REJUDGED_JSON\n\
+                     Usage, stickler split SPLIT_JSON\n";
 
 /// The outcome of one command line run, holding the exit code
 /// and the text for each of the two output streams.
@@ -307,6 +310,32 @@ fn rejudged_command(path: &JString) -> ByteOutcome {
     text_outcome(0, render_rejudged(&rejudged_of(&value)))
 }
 
+fn split_command(path: &JString) -> ByteOutcome {
+    let text = match read_text(path) {
+        Err(()) => {
+            return text_outcome(
+                2,
+                render_split_defects(&["the split file could not be read".to_string()]),
+            );
+        }
+        Ok(text) => text,
+    };
+    let value = match json::parse(&text) {
+        Err(_) => {
+            return text_outcome(
+                2,
+                render_split_defects(&["the file does not hold a JSON split".to_string()]),
+            );
+        }
+        Ok(value) => value,
+    };
+    let defects = load_split(&value);
+    if !defects.is_empty() {
+        return text_outcome(2, render_split_defects(&defects));
+    }
+    text_outcome(0, render_split(&split_of(&value)))
+}
+
 /// Run the command line over code unit arguments and return
 /// the outcome as raw bytes.
 pub fn cli_main_units(args: &[JString]) -> ByteOutcome {
@@ -325,6 +354,9 @@ pub fn cli_main_units(args: &[JString]) -> ByteOutcome {
         }
         if args[0].equals("rejudged") {
             return rejudged_command(&args[1]);
+        }
+        if args[0].equals("split") {
+            return split_command(&args[1]);
         }
     }
     ByteOutcome {
