@@ -24,7 +24,7 @@ fn agents_carries_the_canonical_marker() {
 #[test]
 fn readme_states_the_closed_round_count() {
     let text = read("README.md");
-    assert!(text.contains("Closed perfection rounds, 5 of 100"));
+    assert!(text.contains("Closed perfection rounds, 6 of 100"));
 }
 
 #[test]
@@ -95,8 +95,9 @@ fn readme_reports_the_round_4_standing() {
     // standing line and the slice line themselves. Adjusted
     // again with the Round 6 slice, as the named mechanical
     // consequence of slice 7 standing in review, so the count
-    // stands at one while Round 6 is built.
-    assert_eq!(text.matches("built and in review").count(), 1);
+    // stood at one while Round 6 was built, until the Round 6
+    // closure landed slice 7 and the count returned to zero.
+    assert_eq!(text.matches("built and in review").count(), 0);
 }
 
 #[test]
@@ -114,16 +115,18 @@ fn readme_reports_the_round_5_standing() {
         example named as constructed, with the suite running offline \
         on the recorded and constructed sets.";
     assert!(text.lines().any(|line| line == slice_line));
-    assert!(text.contains("Closed perfection rounds, 5 of 100"));
+    assert!(text.contains("Closed perfection rounds, 6 of 100"));
 }
 
 #[test]
 fn readme_reports_the_round_6_standing() {
     let text = read("README.md");
-    let standing = "- Contract, CK-13 and CK-14 stated. They stand in full form in \
-        CONTRACT.md, and Round 6 stands open on slice 7 in review.";
+    let standing = "- Contract, CK-13 and CK-14 met. They stand in full form in \
+        CONTRACT.md with the Round 6 repair amendment, and Round 6 \
+        closed on the merged slice 7 after three reviews, a repair \
+        pass, and an approving re-review.";
     assert!(text.lines().any(|line| line == standing));
-    let slice_line = "- Slice 7 is built and in review. It carries the \
+    let slice_line = "- Slice 7 has landed. It carries the \
         rejudging run over the pilot flags through the verdict seat's \
         Jev route, recorded as the rejudged set under examples, and \
         the rejudged ledger reading over a stated pair of recorded \
@@ -131,7 +134,7 @@ fn readme_reports_the_round_6_standing() {
         and census, with the suite running offline on the recorded \
         envelopes and sets.";
     assert!(text.lines().any(|line| line == slice_line));
-    assert!(text.contains("Closed perfection rounds, 5 of 100"));
+    assert!(text.contains("Closed perfection rounds, 6 of 100"));
 }
 
 #[test]
