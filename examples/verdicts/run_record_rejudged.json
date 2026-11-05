@@ -1,0 +1,13 @@
+{
+  "routes": [
+    {
+      "model": "jev-1.13.0",
+      "calls_attempted": 12,
+      "verdicts_recorded": 12,
+      "calls_failed": 0,
+      "abstentions": 1,
+      "input_tokens": 5828,
+      "output_tokens": 420
+    }
+  ]
+}

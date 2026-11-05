@@ -5,6 +5,7 @@ use crate::census::{Census, Tally};
 use crate::changeset::{FileResult, Judgements};
 use crate::checker::{BORDERLINE_PATTERNS, SHAPES};
 use crate::json::{JString, JsonValue};
+use crate::rejudged::Rejudged;
 use crate::review::{validate_review, verdict_for};
 use crate::verdicts::{is_contested, line_outcome, reason_for, verdict_outcome};
 
@@ -118,6 +119,42 @@ pub fn render_set_defects(defects: &[String]) -> String {
 /// Render a malformed census with its defects named.
 pub fn render_census_defects(defects: &[String]) -> String {
     render_defects_headed("Census", defects)
+}
+
+/// Render a malformed rejudged pair with its defects named.
+pub fn render_rejudged_defects(defects: &[String]) -> String {
+    render_defects_headed("Rejudged", defects)
+}
+
+/// Render a rejudged reading under CK-14.
+///
+/// The reading names its two sets in asking order, states
+/// each compared input in its own group with the judgement
+/// of each asking and the word the pair stands under, and
+/// closes with its counts. The same pair always renders
+/// byte identical.
+pub fn render_rejudged(reading: &Rejudged) -> String {
+    let mut lines = vec![
+        "Rejudged".to_string(),
+        format!("First, {}", reading.first_label),
+        format!("Second, {}", reading.second_label),
+    ];
+    for pair in &reading.pairs {
+        lines.push(String::new());
+        lines.push(format!(
+            "{}, line {}, {}",
+            pair.file, pair.line, pair.pattern
+        ));
+        lines.push(format!("First, {}", pair.first));
+        lines.push(format!("Second, {}", pair.second));
+        lines.push(if pair.held { "Held" } else { "Changed" }.to_string());
+    }
+    lines.push(String::new());
+    lines.push(format!("Inputs read, {}", reading.inputs_read));
+    lines.push(format!("Standing in both, {}", reading.pairs.len()));
+    lines.push(format!("Held, {}", reading.held));
+    lines.push(format!("Changed, {}", reading.changed));
+    lines.join("\n") + "\n"
 }
 
 /// Push the three judged lines onto a rendering.
