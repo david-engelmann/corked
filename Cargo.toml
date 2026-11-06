@@ -40,6 +40,10 @@ name = "test_contested"
 path = "rust/tests/test_contested.rs"
 
 [[test]]
+name = "test_contested_reading"
+path = "rust/tests/test_contested_reading.rs"
+
+[[test]]
 name = "test_json"
 path = "rust/tests/test_json.rs"
 

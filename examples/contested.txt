@@ -1,0 +1,22 @@
+Contested
+
+Set, round 2 set
+No contested lines
+Flags read, 0
+Contested, 0
+
+Set, pilot set
+No contested lines
+Flags read, 12
+Contested, 0
+
+Set, constructed round 4 example
+ledger.py, line 6, near placeholder name
+cache.py, line 15, near placeholder name
+Flags read, 6
+Contested, 2
+
+Sets read, 3
+Flags read, 18
+Contested flags, 2
+Sets with contested flags, 1

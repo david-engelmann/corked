@@ -123,6 +123,66 @@ fn a_deepest_array_tree_drops_on_a_small_stack_thread() {
     handle.join().unwrap();
 }
 
+/// The deepest object tree is cloned on a thread of the
+/// stack size a test thread carries, two mebibytes, under
+/// FIX-CK-19. The pin runs the reading, the cloning, and
+/// the dropping inside the spawned thread, walks the clone
+/// to its full depth with a loop, and asserts the thread
+/// completes. Against the library before the iterative
+/// clone this pin aborts the process, the derived clone
+/// recursing to the depth of the tree and overflowing the
+/// small stack.
+#[test]
+fn a_deepest_object_tree_clones_on_a_small_stack_thread() {
+    let deepest = "{\"a\": ".repeat(9997) + "1" + &"}".repeat(9997);
+    let handle = std::thread::Builder::new()
+        .stack_size(2 * 1024 * 1024)
+        .spawn(move || {
+            let value = parse(&deepest).unwrap();
+            let cloned = value.clone();
+            let mut depth = 0usize;
+            let mut current = &cloned;
+            while let Some(inner) = current.get("a") {
+                depth += 1;
+                current = inner;
+            }
+            assert_eq!(depth, 9997);
+            drop(value);
+            drop(cloned);
+        })
+        .unwrap();
+    handle.join().unwrap();
+}
+
+/// The deepest array tree stands under the same clone pin
+/// as the object tree, under FIX-CK-19. The walk counts
+/// every array of the clone with a loop, so the pin reads
+/// the depth of the clone without recursing itself.
+#[test]
+fn a_deepest_array_tree_clones_on_a_small_stack_thread() {
+    let deepest = "[".repeat(9997) + &"]".repeat(9997);
+    let handle = std::thread::Builder::new()
+        .stack_size(2 * 1024 * 1024)
+        .spawn(move || {
+            let value = parse(&deepest).unwrap();
+            let cloned = value.clone();
+            let mut depth = 0usize;
+            let mut current = &cloned;
+            while let Some(items) = current.as_array() {
+                depth += 1;
+                match items.first() {
+                    Some(inner) => current = inner,
+                    None => break,
+                }
+            }
+            assert_eq!(depth, 9997);
+            drop(value);
+            drop(cloned);
+        })
+        .unwrap();
+    handle.join().unwrap();
+}
+
 #[test]
 fn an_unpaired_surrogate_is_representable_and_detected() {
     let value = parse(r#""\ud800x""#).unwrap();
