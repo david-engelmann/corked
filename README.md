@@ -1,14 +1,24 @@
 # stickler
 
-A strict reviewer of code and naming. It sends back work that falls short, names the flaw and the standard it violates, and states the rewrite that would pass.
+Stickler is a command line tool that reviews code against named rules. It checks a diff with a built in checker, and it prints readings over verdicts that decision model routes recorded while judging a change set against those rules.
 
 ## What this is
 
-Most agents accept whatever you hand them and whatever they produce. Stickler does not. It reads every line against a named standard and sends back whatever falls short of it. A variable named like a shrug, a function doing three jobs while pretending to do one, an abstraction built for an audience that will never arrive. Stickler names the flaw, states the standard it violates, and holds the line until the work meets that standard.
+Stickler takes one file per command and prints one rendering. Every command runs offline, and no command calls a model. The recorded verdicts the readings run over were produced in earlier rounds by the routes they name and stand committed under examples as fixtures.
+
+The check command reads a unified diff and builds a review with the built in checker. The checker holds a fixed set of rules over the shapes of code a diff can carry, and each objection it raises names the rule the code breaks and the change that would clear the objection. The render command reads a review recorded as JSON and prints the review rendering from the record.
+
+The review command reads a change set. A change set lists flags, and each flag names a file, a line, and a pattern. The change set also carries the verdicts on its flags, recorded by decision model routes through the verdict seat. The set review prints the judgement of each flag, the lines where the routes that judged one flag disagree as the contested lines, and a summary tally of the verdicts.
+
+The census command reads a census file that names a collection of recorded review inputs and prints the judging census. The census gives a tally of the judgements for each set in the collection and a total tally over the whole collection, counting files, judgements, and verdicts.
+
+The rejudged command reads a file that names two recorded sets of verdicts over the same flags and prints the rejudged ledger. The ledger states the judgement of each flag in the first set and in the second set, and whether that judgement held or changed between the two sets.
+
+The split command reads a file that names one recorded set and two routes and prints the split reading. The split reading states the judgement of each flag under the first route alone, under the second route alone, and under both routes jointly, and it closes with counts of the flags read, the flags where the routes agree, the flags where they differ, and the flags where the joint judgement differs from a route.
 
 ## Status
 
-Seeded in October 2026. Setup has landed, and Rounds 1 to 5 have closed, with all five slices merged on main. Part of the Spectacle line in the 39 repo storefront perfection programme.
+Seeded in October 2026. Setup has landed, and Rounds 1 to 7 have closed, with all slices merged on main. Part of the Spectacle line in the 39 repo storefront perfection programme.
 
 ## Programme status
 
