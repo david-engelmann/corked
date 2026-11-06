@@ -101,8 +101,11 @@ fn readme_reports_the_round_4_standing() {
     // mechanical consequence of slice 8 standing in review,
     // so the count stood at one while Round 7 was built,
     // until the Round 7 closure landed slice 8 and the
-    // count returned to zero.
-    assert_eq!(text.matches("built and in review").count(), 0);
+    // count returned to zero. Adjusted again with the
+    // Round 8 slice, as the named mechanical consequence
+    // of slice 9 standing in review, so the count stands
+    // at one while Round 8 is built.
+    assert_eq!(text.matches("built and in review").count(), 1);
 }
 
 #[test]
@@ -156,6 +159,26 @@ fn readme_reports_the_round_7_standing() {
         example over the pilot set under examples, and the split command \
         beside check, render, review, census, and rejudged, with the \
         suite running offline on the recorded verdicts.";
+    assert!(text.lines().any(|line| line == slice_line));
+    assert!(text.contains("Closed perfection rounds, 7 of 100"));
+}
+
+#[test]
+fn readme_reports_the_round_8_standing() {
+    let text = read("README.md");
+    let standing = "- Contract, CK-17 and CK-18 stated. They stand in full form in \
+        CONTRACT.md, and Round 8 stands open on slice 9 in review.";
+    assert!(text.lines().any(|line| line == standing));
+    let slice_line = "- Slice 9 is built and in review. It carries the \
+        contested reading over a recorded collection of change sets, one \
+        section per set in collection order, naming each set's contested \
+        flags with file, line, and pattern, or the no contest line where \
+        a set holds none, with per set flags read and contested counts \
+        and closing counts over the whole collection, with the contested \
+        example under examples standing over the same collection as the \
+        census example, and the contested command beside check, render, \
+        review, census, rejudged, and split, with the suite running \
+        offline on the recorded verdicts.";
     assert!(text.lines().any(|line| line == slice_line));
     assert!(text.contains("Closed perfection rounds, 7 of 100"));
 }

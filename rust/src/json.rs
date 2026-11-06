@@ -347,7 +347,7 @@ fn encode_surrogateescape(units: &[u16]) -> Vec<u8> {
 }
 
 /// A JSON value.
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub enum JsonValue {
     Null,
     Bool(bool),
@@ -355,6 +355,58 @@ pub enum JsonValue {
     Str(JString),
     Array(Vec<JsonValue>),
     Object(Vec<(JString, JsonValue)>),
+}
+
+/// Cloning is iterative, as the reading and the disposal
+/// are. A parsed tree can stand at the deepest nesting the
+/// reader accepts, and the derived clone would recurse to
+/// that depth and overflow the stack of a small thread. The
+/// walk keeps its work on a heap list and assembles each
+/// container from the clones of its children standing on a
+/// second list, so the depth of the tree never becomes the
+/// depth of the call stack on any path that clones a value.
+impl Clone for JsonValue {
+    fn clone(&self) -> JsonValue {
+        enum Work<'a> {
+            Value(&'a JsonValue),
+            Array(usize),
+            Object(Vec<JString>, usize),
+        }
+        let mut work = vec![Work::Value(self)];
+        let mut done: Vec<JsonValue> = Vec::new();
+        while let Some(item) = work.pop() {
+            match item {
+                Work::Value(value) => match value {
+                    JsonValue::Null => done.push(JsonValue::Null),
+                    JsonValue::Bool(flag) => done.push(JsonValue::Bool(*flag)),
+                    JsonValue::Number(number) => done.push(JsonValue::Number(number.clone())),
+                    JsonValue::Str(text) => done.push(JsonValue::Str(text.clone())),
+                    JsonValue::Array(items) => {
+                        work.push(Work::Array(items.len()));
+                        for child in items.iter().rev() {
+                            work.push(Work::Value(child));
+                        }
+                    }
+                    JsonValue::Object(pairs) => {
+                        let keys: Vec<JString> = pairs.iter().map(|pair| pair.0.clone()).collect();
+                        work.push(Work::Object(keys, pairs.len()));
+                        for pair in pairs.iter().rev() {
+                            work.push(Work::Value(&pair.1));
+                        }
+                    }
+                },
+                Work::Array(count) => {
+                    let children = done.split_off(done.len() - count);
+                    done.push(JsonValue::Array(children));
+                }
+                Work::Object(keys, count) => {
+                    let children = done.split_off(done.len() - count);
+                    done.push(JsonValue::Object(keys.into_iter().zip(children).collect()));
+                }
+            }
+        }
+        done.pop().expect("the walk clones the value it was handed")
+    }
 }
 
 /// Disposal is iterative, as the reading is. A parsed tree can

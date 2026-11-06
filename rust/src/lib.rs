@@ -9,6 +9,7 @@ pub mod census;
 pub mod changeset;
 pub mod checker;
 pub mod cli;
+pub mod contested;
 pub mod json;
 pub mod pycompat;
 pub mod rejudged;

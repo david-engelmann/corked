@@ -4,6 +4,7 @@
 use crate::census::{Census, Tally};
 use crate::changeset::{FileResult, Judgements};
 use crate::checker::{BORDERLINE_PATTERNS, SHAPES};
+use crate::contested::Contested;
 use crate::json::{JString, JsonValue};
 use crate::rejudged::Rejudged;
 use crate::review::{validate_review, verdict_for};
@@ -193,6 +194,85 @@ pub fn render_split(reading: &Split) -> String {
     lines.push(format!(
         "Joint differs from a route, {}",
         reading.joint_differs
+    ));
+    lines.join("\n") + "\n"
+}
+
+/// Render a malformed contested file with its defects named.
+pub fn render_contested_defects(defects: &[String]) -> String {
+    render_defects_headed("Contested", defects)
+}
+
+/// Read a field the contested reading prints under the one
+/// line rule of CK-18, as FIX-CK-20 closes that rule at the
+/// library surface. A field holding a line break, the break
+/// standing as the newline or the carriage return the
+/// loaders name, prints as the empty field, the rendering
+/// this reading already gives a label that stands for no
+/// printable string through its reading function, so no
+/// field the rendering is handed can split a line or mint
+/// a structural line.
+fn one_line_field(field: &str) -> &str {
+    if field.contains('\n') || field.contains('\r') {
+        ""
+    } else {
+        field
+    }
+}
+
+/// Render a contested reading under CK-18.
+///
+/// The reading states each set of the collection in its
+/// own section in the order the collection states them,
+/// naming the contested flags of the set or the no
+/// contested lines line where it holds none, and closes
+/// with the counts of the collection. The closing counts
+/// print as the sums over the sections stated, in the
+/// relations CK-18 states for them, and every field prints
+/// under the one line rule, so the rendering holds both
+/// rules for any reading it is handed, under FIX-CK-20.
+/// The same collection always renders byte identical.
+pub fn render_contested(reading: &Contested) -> String {
+    let mut lines = vec!["Contested".to_string()];
+    for set in &reading.sets {
+        lines.push(String::new());
+        lines.push(format!("Set, {}", one_line_field(&set.label)));
+        if set.contested.is_empty() {
+            lines.push("No contested lines".to_string());
+        } else {
+            for flag in &set.contested {
+                lines.push(format!(
+                    "{}, line {}, {}",
+                    one_line_field(&flag.file),
+                    flag.line,
+                    one_line_field(&flag.pattern)
+                ));
+            }
+        }
+        lines.push(format!("Flags read, {}", set.flags_read));
+        lines.push(format!("Contested, {}", set.contested.len()));
+    }
+    lines.push(String::new());
+    lines.push(format!("Sets read, {}", reading.sets.len()));
+    lines.push(format!(
+        "Flags read, {}",
+        reading.sets.iter().map(|set| set.flags_read).sum::<usize>()
+    ));
+    lines.push(format!(
+        "Contested flags, {}",
+        reading
+            .sets
+            .iter()
+            .map(|set| set.contested.len())
+            .sum::<usize>()
+    ));
+    lines.push(format!(
+        "Sets with contested flags, {}",
+        reading
+            .sets
+            .iter()
+            .filter(|set| !set.contested.is_empty())
+            .count()
     ));
     lines.join("\n") + "\n"
 }
