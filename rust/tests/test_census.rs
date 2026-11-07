@@ -13,7 +13,7 @@
 
 use std::path::{Path, PathBuf};
 
-use stickler::census::{census_of, load_census};
+use stickler::census::{census_of, load_census, Census, CensusSet, Tally};
 use stickler::changeset::review_changeset;
 use stickler::cli::{cli_main, cli_main_units};
 use stickler::json::{parse, JString};
@@ -569,4 +569,156 @@ fn the_census_of_a_member_matches_its_set_review_counts() {
     assert_eq!(census.sets[0].tally.borderline, 2);
     assert_eq!(census.sets[0].tally.patterns, [1, 1, 0]);
     assert_eq!(census.total.borderline, 2);
+}
+
+/// The fencing of FIX-CK-21 on the census label. A set
+/// label holding a line break and a head line's own text
+/// is refused by the loader, and read through the library
+/// the rendering prints the label as the empty field, so
+/// the forged head line never stands beside the true one.
+/// Before the closure the rendering printed the label raw
+/// and the forged line stood.
+#[test]
+fn a_line_break_label_mints_no_head_line_through_the_library() {
+    let set = change_set_json(&[entry_json("app.py", FLAGS_DIFF, "")]);
+    let text = census_json(&[("evil\nSets, 99", set)]);
+    let value = parse(&text).unwrap();
+    assert!(!load_census(&value).is_empty());
+    let out = render_census(&census_of(&value));
+    assert!(out.lines().any(|line| line == "Set, "), "{out}");
+    assert!(!out.lines().any(|line| line == "Sets, 99"), "{out}");
+    let heads: Vec<&str> = out
+        .lines()
+        .filter(|line| line.starts_with("Sets, "))
+        .collect();
+    assert_eq!(heads, ["Sets, 1", "Sets, 1"], "{out}");
+}
+
+/// The handed total of FIX-CK-21. CK-11 states the total
+/// block as every count of the set blocks summed over the
+/// collection, and a census built by hand prints its
+/// total block in that relation, so the total it was
+/// handed never stands. Before the closure the rendering
+/// printed the handed total whole.
+#[test]
+fn a_hand_built_census_prints_the_total_of_its_set_blocks() {
+    let census = Census {
+        sets: vec![
+            CensusSet {
+                label: "one".to_string(),
+                tally: Tally {
+                    files: 1,
+                    judgements: 2,
+                    shapes: [1, 0, 0, 0, 0, 0],
+                    borderline: 3,
+                    patterns: [1, 1, 1],
+                    verdicts_stand: true,
+                    stickler: 1,
+                    clean: 1,
+                    unjudged: 1,
+                    contested: 1,
+                },
+            },
+            CensusSet {
+                label: "two".to_string(),
+                tally: Tally {
+                    files: 2,
+                    judgements: 0,
+                    shapes: [0, 1, 0, 0, 0, 0],
+                    borderline: 1,
+                    patterns: [0, 0, 1],
+                    verdicts_stand: false,
+                    stickler: 0,
+                    clean: 0,
+                    unjudged: 1,
+                    contested: 0,
+                },
+            },
+        ],
+        total: Tally {
+            files: 555,
+            judgements: 555,
+            shapes: [555; 6],
+            borderline: 555,
+            patterns: [555; 3],
+            verdicts_stand: false,
+            stickler: 555,
+            clean: 555,
+            unjudged: 555,
+            contested: 555,
+        },
+    };
+    let out = render_census(&census);
+    assert!(!out.contains("555"), "{out}");
+    let total = out
+        .split("\nTotal\n")
+        .nth(1)
+        .expect("the rendering holds a total block");
+    assert!(
+        total.starts_with("Sets, 2\nFiles, 3\nJudgements, 2\n"),
+        "{out}"
+    );
+    assert!(total.contains("Shape, bare except, 1\n"), "{out}");
+    assert!(total.contains("Shape, print call, 1\n"), "{out}");
+    assert!(total.contains("Borderline, 4\n"), "{out}");
+    assert!(
+        total.contains("Pattern, near placeholder name, 1\n"),
+        "{out}"
+    );
+    assert!(total.contains("Pattern, broad handler, 1\n"), "{out}");
+    assert!(
+        total.contains("Pattern, shared member default, 2\n"),
+        "{out}"
+    );
+    // The judged lines stand in the total because a
+    // verdict stands in one of its set blocks, though the
+    // handed total said none did.
+    assert!(
+        total.contains("Verdict lines, stickler 1, clean 1\nUnjudged, 2\nContested, 1\n"),
+        "{out}"
+    );
+}
+
+/// The other direction of the same derivation. Where no
+/// set block holds a verdict, the total block states the
+/// none recorded line even when the handed total claims
+/// judged counts.
+#[test]
+fn a_hand_built_census_derives_the_none_recorded_form_of_its_total() {
+    let census = Census {
+        sets: vec![CensusSet {
+            label: "one".to_string(),
+            tally: Tally {
+                files: 1,
+                judgements: 0,
+                shapes: [0; 6],
+                borderline: 2,
+                patterns: [1, 1, 0],
+                verdicts_stand: false,
+                stickler: 0,
+                clean: 0,
+                unjudged: 2,
+                contested: 0,
+            },
+        }],
+        total: Tally {
+            files: 1,
+            judgements: 0,
+            shapes: [0; 6],
+            borderline: 2,
+            patterns: [1, 1, 0],
+            verdicts_stand: true,
+            stickler: 2,
+            clean: 0,
+            unjudged: 0,
+            contested: 0,
+        },
+    };
+    let out = render_census(&census);
+    let total = out
+        .split("\nTotal\n")
+        .nth(1)
+        .expect("the rendering holds a total block");
+    assert!(total.contains("Verdicts, none recorded\n"), "{out}");
+    assert!(!total.contains("Verdict lines"), "{out}");
 }

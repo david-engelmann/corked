@@ -11,6 +11,7 @@ pub mod checker;
 pub mod cli;
 pub mod contested;
 pub mod json;
+pub mod pattern;
 pub mod pycompat;
 pub mod rejudged;
 pub mod render;

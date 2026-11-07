@@ -106,7 +106,11 @@ fn readme_reports_the_round_4_standing() {
     // of slice 9 standing in review, so the count stood
     // at one while Round 8 was built, until the Round 8
     // closure landed slice 9 and the count returned to zero.
-    assert_eq!(text.matches("built and in review").count(), 0);
+    // Adjusted again with the Round 9 slice, as the named
+    // mechanical consequence of slice 10 standing in
+    // review, so the count stands at one while Round 9
+    // is built.
+    assert_eq!(text.matches("built and in review").count(), 1);
 }
 
 #[test]
@@ -182,6 +186,28 @@ fn readme_reports_the_round_8_standing() {
         census example, and the contested command beside check, render, \
         review, census, rejudged, and split, with the suite running \
         offline on the recorded verdicts.";
+    assert!(text.lines().any(|line| line == slice_line));
+    assert!(text.contains("Closed perfection rounds, 8 of 100"));
+}
+
+#[test]
+fn readme_reports_the_round_9_standing() {
+    let text = read("README.md");
+    let standing = "- Contract, CK-19 and CK-20 stated. They stand in full form in \
+        CONTRACT.md, and Round 9 stands open on slice 10 in review.";
+    assert!(text.lines().any(|line| line == standing));
+    let slice_line = "- Slice 10 is built and in review. It carries the \
+        pattern reading over a recorded collection of change sets, one \
+        section per borderline pattern in the order the contract states them, \
+        naming each flag of the collection standing under that pattern \
+        with file, line, and the set it stands in, with per section flags \
+        read and contested counts and closing counts over the whole \
+        collection, with the pattern example under examples standing \
+        over the same collection as the census example, and the pattern \
+        command beside check, render, review, census, rejudged, split, \
+        and contested, and the library fencing closure over the census, \
+        rejudged, split, and set review renderings, with the suite \
+        running offline on the recorded verdicts.";
     assert!(text.lines().any(|line| line == slice_line));
     assert!(text.contains("Closed perfection rounds, 8 of 100"));
 }

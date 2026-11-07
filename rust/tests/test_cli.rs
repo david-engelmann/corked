@@ -567,14 +567,15 @@ fn run_units(args: &[&[u8]]) -> ByteOutcome {
     cli_main_units(&owned)
 }
 
-// Adjusted with the Round 8 slice, as the named mechanical
-// consequence of CK-18 adding the contested command to the
-// command line. The usage text gains the contested line, so
+// Adjusted with the Round 9 slice, as the named mechanical
+// consequence of CK-20 adding the pattern command to the
+// command line. The usage text gains the pattern line, so
 // the pinned bytes gain it too, and the three assertions
 // standing on this constant hold the new text. The constant
-// was adjusted before with the Round 7 slice, when CK-16
-// added the split command, with the Round 6 slice, when
-// CK-14 added the rejudged command, and with the Round 5
+// was adjusted before with the Round 8 slice, when CK-18
+// added the contested command, with the Round 7 slice, when
+// CK-16 added the split command, with the Round 6 slice,
+// when CK-14 added the rejudged command, and with the Round 5
 // slice, when CK-12 added the census command in the same way.
 const USAGE_BYTES: &[u8] = b"Usage, stickler check DIFF_FILE\n\
     Usage, stickler render REVIEW_JSON\n\
@@ -582,7 +583,8 @@ const USAGE_BYTES: &[u8] = b"Usage, stickler check DIFF_FILE\n\
     Usage, stickler census CENSUS_JSON\n\
     Usage, stickler rejudged REJUDGED_JSON\n\
     Usage, stickler split SPLIT_JSON\n\
-    Usage, stickler contested CONTESTED_JSON\n";
+    Usage, stickler contested CONTESTED_JSON\n\
+    Usage, stickler pattern PATTERN_JSON\n";
 
 #[test]
 fn check_names_a_readable_raw_byte_diff_by_its_surrogate_defect() {

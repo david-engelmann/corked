@@ -19,7 +19,7 @@ use std::path::{Path, PathBuf};
 use stickler::changeset::review_changeset;
 use stickler::cli::cli_main;
 use stickler::json::{parse, JsonNumber, JsonValue};
-use stickler::rejudged::{load_rejudged, rejudged_of};
+use stickler::rejudged::{load_rejudged, rejudged_of, ComparedInput, Rejudged};
 use stickler::render::render_rejudged;
 use stickler::verdicts::{
     build_verdict_entry, verdict_from_jev_envelope, verdict_outcome, VerdictEntry,
@@ -781,4 +781,98 @@ fn the_command_refuses_unreadable_and_foreign_files() {
         out.contains("Defect, the file does not hold a JSON rejudged pair"),
         "nesting past the boundary is a refusal, never a fall\n{out}"
     );
+}
+
+/// The fencing of FIX-CK-21 on the rejudged labels. A set
+/// label holding a line break and a naming line's own
+/// text is refused by the loader, and read through the
+/// library the rendering prints the label as the empty
+/// field, so the forged naming line never stands beside
+/// the true one. Before the closure the rendering printed
+/// the labels raw and the forged line stood.
+#[test]
+fn line_break_labels_print_as_empty_fields_through_the_library() {
+    let text = pair_json(
+        "evil\nFirst, forged",
+        set_with(""),
+        "evil\nSecond, forged",
+        set_with(""),
+    );
+    let value = parse(&text).unwrap();
+    assert!(!load_rejudged(&value).is_empty());
+    let out = render_rejudged(&rejudged_of(&value));
+    assert!(out.lines().any(|line| line == "First, "), "{out}");
+    assert!(out.lines().any(|line| line == "Second, "), "{out}");
+    assert!(!out.lines().any(|line| line == "First, forged"), "{out}");
+    assert!(!out.lines().any(|line| line == "Second, forged"), "{out}");
+    assert!(!out.contains("evil"), "{out}");
+}
+
+/// The fencing of FIX-CK-21 on the pair file name. A file
+/// name holding a line break and the held word is refused
+/// by the loader, and read through the library the pair
+/// line prints the file as the empty field, so the line
+/// does not split and no held word stands on its own
+/// line from the name. Before the closure the pair line
+/// split at the name.
+#[test]
+fn a_line_break_file_name_splits_no_pair_line_through_the_library() {
+    let verdicts = format!(
+        "[{}]",
+        verdict_json(4, "near placeholder name", "stickler", "0.9")
+    );
+    let set = change_set_json(&[entry_json("evil.py\nHeld", FLAGS_DIFF, &verdicts)]);
+    let text = pair_json("first set", set.clone(), "second set", set);
+    let value = parse(&text).unwrap();
+    assert!(!load_rejudged(&value).is_empty());
+    let out = render_rejudged(&rejudged_of(&value));
+    assert!(
+        out.lines()
+            .any(|line| line == ", line 4, near placeholder name"),
+        "{out}"
+    );
+    // Both flags of the set stand as held pairs, so the
+    // held word stands as a line exactly twice, once per
+    // pair, and the name mints no third standing of it.
+    assert_eq!(
+        out.lines().filter(|line| *line == "Held").count(),
+        2,
+        "the held word stands only as the pairs' own lines\n{out}"
+    );
+}
+
+/// The handed counts of FIX-CK-21 on the rejudged
+/// rendering. CK-14 states the held and changed counts as
+/// the counts of the pairs the reading states, and a
+/// reading built by hand prints them in that relation, so
+/// the counts it was handed never stand. The inputs read
+/// count counts the inputs of the two sets and not the
+/// pairs stated, so it stands as handed. Before the
+/// closure the rendering printed the handed held and
+/// changed counts whole.
+#[test]
+fn a_hand_built_rejudged_prints_the_counts_of_its_pairs() {
+    let pair = |held: bool| ComparedInput {
+        file: "app.py".to_string(),
+        line: 4,
+        pattern: "near placeholder name".to_string(),
+        first: "stickler",
+        second: if held { "stickler" } else { "clean" },
+        held,
+    };
+    let reading = Rejudged {
+        first_label: "first set".to_string(),
+        second_label: "second set".to_string(),
+        pairs: vec![pair(true), pair(false)],
+        inputs_read: 4,
+        held: 555,
+        changed: 666,
+    };
+    let out = render_rejudged(&reading);
+    assert!(!out.contains("555"), "{out}");
+    assert!(!out.contains("666"), "{out}");
+    assert!(out.contains("Inputs read, 4\n"), "{out}");
+    assert!(out.contains("Standing in both, 2\n"), "{out}");
+    assert!(out.contains("Held, 1\n"), "{out}");
+    assert!(out.contains("Changed, 1\n"), "{out}");
 }
