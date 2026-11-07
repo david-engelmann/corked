@@ -24,7 +24,7 @@ fn agents_carries_the_canonical_marker() {
 #[test]
 fn readme_states_the_closed_round_count() {
     let text = read("README.md");
-    assert!(text.contains("Closed perfection rounds, 9 of 100"));
+    assert!(text.contains("Closed perfection rounds, 10 of 100"));
 }
 
 #[test]
@@ -113,10 +113,10 @@ fn readme_reports_the_round_4_standing() {
     // 10 and the count returned to zero. Adjusted again
     // with the Round 10 slice, as the named mechanical
     // consequence of slice 11 standing in review, so the
-    // count stands at one while Round 10 is built, until
-    // the Round 10 closure lands slice 11 and the count
-    // returns to zero.
-    assert_eq!(text.matches("built and in review").count(), 1);
+    // count stood at one while Round 10 was built, until
+    // the Round 10 closure landed slice 11 and the count
+    // returned to zero.
+    assert_eq!(text.matches("built and in review").count(), 0);
 }
 
 #[test]
@@ -134,7 +134,7 @@ fn readme_reports_the_round_5_standing() {
         example named as constructed, with the suite running offline \
         on the recorded and constructed sets.";
     assert!(text.lines().any(|line| line == slice_line));
-    assert!(text.contains("Closed perfection rounds, 9 of 100"));
+    assert!(text.contains("Closed perfection rounds, 10 of 100"));
 }
 
 #[test]
@@ -153,7 +153,7 @@ fn readme_reports_the_round_6_standing() {
         and census, with the suite running offline on the recorded \
         envelopes and sets.";
     assert!(text.lines().any(|line| line == slice_line));
-    assert!(text.contains("Closed perfection rounds, 9 of 100"));
+    assert!(text.contains("Closed perfection rounds, 10 of 100"));
 }
 
 #[test]
@@ -171,7 +171,7 @@ fn readme_reports_the_round_7_standing() {
         beside check, render, review, census, and rejudged, with the \
         suite running offline on the recorded verdicts.";
     assert!(text.lines().any(|line| line == slice_line));
-    assert!(text.contains("Closed perfection rounds, 9 of 100"));
+    assert!(text.contains("Closed perfection rounds, 10 of 100"));
 }
 
 #[test]
@@ -193,7 +193,7 @@ fn readme_reports_the_round_8_standing() {
         review, census, rejudged, and split, with the suite running \
         offline on the recorded verdicts.";
     assert!(text.lines().any(|line| line == slice_line));
-    assert!(text.contains("Closed perfection rounds, 9 of 100"));
+    assert!(text.contains("Closed perfection rounds, 10 of 100"));
 }
 
 #[test]
@@ -219,16 +219,19 @@ fn readme_reports_the_round_9_standing() {
         rejudged, split, and set review renderings, with the suite \
         running offline on the recorded verdicts.";
     assert!(text.lines().any(|line| line == slice_line));
-    assert!(text.contains("Closed perfection rounds, 9 of 100"));
+    assert!(text.contains("Closed perfection rounds, 10 of 100"));
 }
 
 #[test]
 fn readme_reports_the_round_10_standing() {
     let text = read("README.md");
-    let standing = "- Contract, CK-21 and CK-22 stated. They stand in full form in \
-        CONTRACT.md, and Round 10 stands open on slice 11 in review.";
+    let standing = "- Contract, CK-21 and CK-22 met. They stand in full form in \
+        CONTRACT.md with the FIX-CK-22 fencing closure, and Round 10 \
+        closed on the merged slice 11 after three reviews, with the \
+        red team's one observation on the set review rendering \
+        carried to a later round as a fencing candidate.";
     assert!(text.lines().any(|line| line == standing));
-    let slice_line = "- Slice 11 is built and in review. It carries the \
+    let slice_line = "- Slice 11 has landed. It carries the \
         file reading over a recorded collection of change sets, one \
         section per file in first appearance order across the \
         collection, naming each flag standing on that file with line, \
@@ -242,7 +245,7 @@ fn readme_reports_the_round_10_standing() {
         README brought to the fleet README standard, with the suite \
         running offline on the recorded verdicts.";
     assert!(text.lines().any(|line| line == slice_line));
-    assert!(text.contains("Closed perfection rounds, 9 of 100"));
+    assert!(text.contains("Closed perfection rounds, 10 of 100"));
 }
 
 #[test]
