@@ -20,7 +20,7 @@ use stickler::changeset::review_changeset;
 use stickler::cli::cli_main;
 use stickler::json::{parse, JsonValue};
 use stickler::render::render_split;
-use stickler::split::{load_split, split_of};
+use stickler::split::{load_split, split_of, Split, SplitFlag};
 use stickler::verdicts::line_outcome;
 
 fn root() -> PathBuf {
@@ -660,4 +660,102 @@ fn the_contract_states_the_split_obligations() {
     ] {
         assert!(text.contains(marker), "the contract states {marker}");
     }
+}
+
+/// The fencing of FIX-CK-21 on the split routes. A route
+/// string holding a line break and a naming line's own
+/// text is refused by the loader, and read through the
+/// library the rendering prints the route as the empty
+/// field, so the forged naming line never stands beside
+/// the true one. Before the closure the rendering printed
+/// the routes raw and the forged line stood.
+#[test]
+fn line_break_routes_print_as_empty_fields_through_the_library() {
+    let text = split_json("evil\nFirst route, forged", CHAT, set_with(""));
+    let value = parse(&text).unwrap();
+    assert!(!load_split(&value).is_empty());
+    let out = render_split(&split_of(&value));
+    assert!(out.lines().any(|line| line == "First route, "), "{out}");
+    assert!(
+        !out.lines().any(|line| line == "First route, forged"),
+        "{out}"
+    );
+    assert!(!out.contains("evil"), "{out}");
+}
+
+/// The fencing of FIX-CK-21 on the split flag file name.
+/// A file name holding a line break and a route line's
+/// own text is refused by the loader, and read through
+/// the library the flag line prints the file as the empty
+/// field, so the line does not split. Before the closure
+/// the flag line split at the name.
+#[test]
+fn a_line_break_file_name_splits_no_flag_line_through_the_library() {
+    let verdicts = format!(
+        "[{},{}]",
+        verdict_json(4, "near placeholder name", JEV, "stickler", "0.9"),
+        verdict_json(4, "near placeholder name", CHAT, "stickler", "0.9")
+    );
+    let set = change_set_json(&[entry_json(
+        "evil.py\nFirst route, forged",
+        FLAGS_DIFF,
+        &verdicts,
+    )]);
+    let text = split_json(JEV, CHAT, set);
+    let value = parse(&text).unwrap();
+    assert!(!load_split(&value).is_empty());
+    let out = render_split(&split_of(&value));
+    assert!(
+        out.lines()
+            .any(|line| line == ", line 4, near placeholder name"),
+        "{out}"
+    );
+    assert!(
+        !out.lines().any(|line| line == "First route, forged"),
+        "{out}"
+    );
+    assert_eq!(
+        out.lines()
+            .filter(|line| *line == "First route, jev-1.13.0")
+            .count(),
+        1,
+        "the route naming line stands once, at the head\n{out}"
+    );
+}
+
+/// The handed counts of FIX-CK-21 on the split rendering.
+/// CK-16 states the closing counts as counts over the
+/// flags the reading states, and a reading built by hand
+/// prints them in that relation, so the counts it was
+/// handed never stand. Before the closure the rendering
+/// printed the handed counts whole.
+#[test]
+fn a_hand_built_split_prints_the_counts_of_its_flags() {
+    let flag = |first: &'static str, second: &'static str, joint: &'static str| SplitFlag {
+        file: "app.py".to_string(),
+        line: 4,
+        pattern: "near placeholder name".to_string(),
+        first,
+        second,
+        joint,
+    };
+    let reading = Split {
+        first_route: "jev-1.13.0".to_string(),
+        second_route: "openai/gpt-6-luna".to_string(),
+        flags: vec![
+            flag("stickler", "stickler", "stickler"),
+            flag("stickler", "clean", "clean"),
+        ],
+        routes_agree: 555,
+        routes_differ: 666,
+        joint_differs: 777,
+    };
+    let out = render_split(&reading);
+    assert!(!out.contains("555"), "{out}");
+    assert!(!out.contains("666"), "{out}");
+    assert!(!out.contains("777"), "{out}");
+    assert!(out.contains("Flags read, 2\n"), "{out}");
+    assert!(out.contains("Routes agree, 1\n"), "{out}");
+    assert!(out.contains("Routes differ, 1\n"), "{out}");
+    assert!(out.contains("Joint differs from a route, 1\n"), "{out}");
 }

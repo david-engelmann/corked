@@ -1,0 +1,35 @@
+Pattern
+
+Pattern, near placeholder name
+harvest.py, line 6, set pilot set
+harvest.py, line 7, set pilot set
+sorting.py, line 6, set pilot set
+sorting.py, line 11, set pilot set
+sorting.py, line 12, set pilot set
+ledger.py, line 6, set constructed round 4 example
+ledger.py, line 7, set constructed round 4 example
+cache.py, line 15, set constructed round 4 example
+cache.py, line 19, set constructed round 4 example
+Flags read, 9
+Contested, 2
+
+Pattern, broad handler
+harvest.py, line 12, set pilot set
+harvest.py, line 18, set pilot set
+sorting.py, line 15, set pilot set
+cache.py, line 10, set constructed round 4 example
+Flags read, 4
+Contested, 0
+
+Pattern, shared member default
+windows.py, line 6, set pilot set
+windows.py, line 10, set pilot set
+windows.py, line 14, set pilot set
+windows.py, line 18, set pilot set
+cache.py, line 7, set constructed round 4 example
+Flags read, 5
+Contested, 0
+
+Sets read, 3
+Flags read, 18
+Contested flags, 2

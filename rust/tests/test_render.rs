@@ -3,9 +3,11 @@
 
 use std::path::PathBuf;
 
-use stickler::changeset::{check_changeset, review_changeset};
-use stickler::json::{parse, JString, JsonValue};
+use stickler::changeset::{check_changeset, review_changeset, Block, FileResult};
+use stickler::checker::Flag;
+use stickler::json::{parse, JString, JsonNumber, JsonValue};
 use stickler::render::{render_review, render_set_defects, render_set_review};
+use stickler::verdicts::VerdictEntry;
 
 fn root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -278,5 +280,110 @@ fn a_malformed_set_rendering_names_every_defect() {
          Defects, 2\n\
          Defect, files is missing\n\
          Defect, files[0] must be an object\n"
+    );
+}
+
+/// The fencing of FIX-CK-21 on the set review file name,
+/// read through the library over a change set the loader
+/// refuses. The name holding a line break and a worst
+/// line's own text prints as the empty field at the head
+/// of its entry and in the worst first lines, so no worst
+/// line is forged. Before the closure the rendering
+/// printed the name raw at both sites.
+#[test]
+fn a_line_break_file_name_forges_no_worst_line_through_the_library() {
+    let text = "{\
+        \"files\":[{\
+            \"file\":\"evil.py\\nWorst, forged, 9\",\
+            \"diff\":\"--- a/x.py\\n+++ b/x.py\\n@@ -1,1 +1,3 @@\\n+    print(total)\\n+data = load_entries()\\n\"\
+        }]\
+    }";
+    let value = parse(text).unwrap();
+    let rendered = render_set_review(&review_changeset(&value));
+    assert!(rendered.lines().any(|line| line == "File, "), "{rendered}");
+    assert!(
+        rendered.lines().any(|line| line == "Worst, , 1"),
+        "{rendered}"
+    );
+    assert!(
+        !rendered.lines().any(|line| line == "Worst, forged, 9"),
+        "{rendered}"
+    );
+    assert!(!rendered.contains("evil.py"), "{rendered}");
+}
+
+/// The fencing of FIX-CK-21 on the set review file name
+/// in its contested section, over results built by hand.
+/// The name prints as the empty field at the head of its
+/// entry and again in the contested section, so the
+/// section names no forged file line. Before the closure
+/// both sites printed the name raw.
+#[test]
+fn a_line_break_file_name_prints_as_the_empty_field_in_the_contested_section() {
+    let verdict = |model: &str, choice: &str| VerdictEntry {
+        line: 4,
+        pattern: "near placeholder name".to_string(),
+        model: model.to_string(),
+        choice: choice.to_string(),
+        confidence: JsonNumber::Float(0.9),
+    };
+    let results = vec![FileResult {
+        name: "evil.py\nForged file".to_string(),
+        judgements: Vec::new(),
+        blocks: vec![Block {
+            flag: Flag {
+                line: 4,
+                pattern: "near placeholder name".to_string(),
+                content: "data = load_entries()".to_string(),
+                reading: "a reading".to_string(),
+            },
+            verdicts: vec![
+                verdict("jev-1.13.0", "stickler"),
+                verdict("openai/gpt-6-luna", "clean"),
+            ],
+        }],
+    }];
+    let rendered = render_set_review(&results);
+    assert!(rendered.contains("Contested lines\n"), "{rendered}");
+    assert_eq!(
+        rendered.lines().filter(|line| *line == "File, ").count(),
+        2,
+        "the name prints fenced at the entry head and in the contested section\n{rendered}"
+    );
+    assert!(
+        !rendered.lines().any(|line| line == "Forged file"),
+        "{rendered}"
+    );
+    assert!(!rendered.contains("evil.py"), "{rendered}");
+}
+
+/// The fencing of FIX-CK-21 on the set review flag
+/// pattern, over results built by hand. A pattern holding
+/// a line break and a borderline line's own text prints
+/// as the empty field, so no borderline line is forged.
+/// Before the closure the flag line split at the pattern.
+#[test]
+fn a_line_break_pattern_forges_no_borderline_line_in_a_hand_built_result() {
+    let results = vec![FileResult {
+        name: "app.py".to_string(),
+        judgements: Vec::new(),
+        blocks: vec![Block {
+            flag: Flag {
+                line: 4,
+                pattern: "near placeholder name\nBorderline 9, forged".to_string(),
+                content: "data = load_entries()".to_string(),
+                reading: "a reading".to_string(),
+            },
+            verdicts: Vec::new(),
+        }],
+    }];
+    let rendered = render_set_review(&results);
+    assert!(
+        rendered.lines().any(|line| line == "Borderline 1, "),
+        "{rendered}"
+    );
+    assert!(
+        !rendered.lines().any(|line| line == "Borderline 9, forged"),
+        "{rendered}"
     );
 }

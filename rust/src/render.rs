@@ -1,11 +1,12 @@
 //! The one deterministic rendering of a review, shared by every
 //! command.
 
-use crate::census::{Census, Tally};
+use crate::census::{Census, CensusSet, Tally};
 use crate::changeset::{FileResult, Judgements};
 use crate::checker::{BORDERLINE_PATTERNS, SHAPES};
 use crate::contested::Contested;
 use crate::json::{JString, JsonValue};
+use crate::pattern::PatternReading;
 use crate::rejudged::Rejudged;
 use crate::review::{validate_review, verdict_for};
 use crate::split::Split;
@@ -133,19 +134,28 @@ pub fn render_rejudged_defects(defects: &[String]) -> String {
 /// The reading names its two sets in asking order, states
 /// each compared input in its own group with the judgement
 /// of each asking and the word the pair stands under, and
-/// closes with its counts. The same pair always renders
+/// closes with its counts. The held and changed counts
+/// print as the counts of the pairs stated, in the
+/// relations CK-14 states for them, and every field
+/// prints under the one line rule, so the rendering holds
+/// both rules for any reading it is handed, under
+/// FIX-CK-21. The inputs read count counts the inputs of
+/// the two sets and not the pairs stated, so it stands as
+/// the reading states it. The same pair always renders
 /// byte identical.
 pub fn render_rejudged(reading: &Rejudged) -> String {
     let mut lines = vec![
         "Rejudged".to_string(),
-        format!("First, {}", reading.first_label),
-        format!("Second, {}", reading.second_label),
+        format!("First, {}", one_line_field(&reading.first_label)),
+        format!("Second, {}", one_line_field(&reading.second_label)),
     ];
     for pair in &reading.pairs {
         lines.push(String::new());
         lines.push(format!(
             "{}, line {}, {}",
-            pair.file, pair.line, pair.pattern
+            one_line_field(&pair.file),
+            pair.line,
+            one_line_field(&pair.pattern)
         ));
         lines.push(format!("First, {}", pair.first));
         lines.push(format!("Second, {}", pair.second));
@@ -154,8 +164,14 @@ pub fn render_rejudged(reading: &Rejudged) -> String {
     lines.push(String::new());
     lines.push(format!("Inputs read, {}", reading.inputs_read));
     lines.push(format!("Standing in both, {}", reading.pairs.len()));
-    lines.push(format!("Held, {}", reading.held));
-    lines.push(format!("Changed, {}", reading.changed));
+    lines.push(format!(
+        "Held, {}",
+        reading.pairs.iter().filter(|pair| pair.held).count()
+    ));
+    lines.push(format!(
+        "Changed, {}",
+        reading.pairs.iter().filter(|pair| !pair.held).count()
+    ));
     lines.join("\n") + "\n"
 }
 
@@ -169,19 +185,25 @@ pub fn render_split_defects(defects: &[String]) -> String {
 /// The reading names its two routes in the order the file
 /// names them, states each flag in its own group with the
 /// judgement of each route alone and the joint judgement,
-/// and closes with its counts. The same file always
-/// renders byte identical.
+/// and closes with its counts. The closing counts print
+/// as the counts over the flags stated, in the relations
+/// CK-16 states for them, and every field prints under
+/// the one line rule, so the rendering holds both rules
+/// for any reading it is handed, under FIX-CK-21. The
+/// same file always renders byte identical.
 pub fn render_split(reading: &Split) -> String {
     let mut lines = vec![
         "Split".to_string(),
-        format!("First route, {}", reading.first_route),
-        format!("Second route, {}", reading.second_route),
+        format!("First route, {}", one_line_field(&reading.first_route)),
+        format!("Second route, {}", one_line_field(&reading.second_route)),
     ];
     for flag in &reading.flags {
         lines.push(String::new());
         lines.push(format!(
             "{}, line {}, {}",
-            flag.file, flag.line, flag.pattern
+            one_line_field(&flag.file),
+            flag.line,
+            one_line_field(&flag.pattern)
         ));
         lines.push(format!("First route, {}", flag.first));
         lines.push(format!("Second route, {}", flag.second));
@@ -189,11 +211,29 @@ pub fn render_split(reading: &Split) -> String {
     }
     lines.push(String::new());
     lines.push(format!("Flags read, {}", reading.flags.len()));
-    lines.push(format!("Routes agree, {}", reading.routes_agree));
-    lines.push(format!("Routes differ, {}", reading.routes_differ));
+    lines.push(format!(
+        "Routes agree, {}",
+        reading
+            .flags
+            .iter()
+            .filter(|flag| flag.first == flag.second)
+            .count()
+    ));
+    lines.push(format!(
+        "Routes differ, {}",
+        reading
+            .flags
+            .iter()
+            .filter(|flag| flag.first != flag.second)
+            .count()
+    ));
     lines.push(format!(
         "Joint differs from a route, {}",
-        reading.joint_differs
+        reading
+            .flags
+            .iter()
+            .filter(|flag| flag.joint != flag.first || flag.joint != flag.second)
+            .count()
     ));
     lines.join("\n") + "\n"
 }
@@ -203,15 +243,19 @@ pub fn render_contested_defects(defects: &[String]) -> String {
     render_defects_headed("Contested", defects)
 }
 
-/// Read a field the contested reading prints under the one
-/// line rule of CK-18, as FIX-CK-20 closes that rule at the
-/// library surface. A field holding a line break, the break
-/// standing as the newline or the carriage return the
-/// loaders name, prints as the empty field, the rendering
-/// this reading already gives a label that stands for no
-/// printable string through its reading function, so no
-/// field the rendering is handed can split a line or mint
-/// a structural line.
+/// Read a field the renderings print under the one line
+/// rule of CK-18, as FIX-CK-20 closes that rule at the
+/// library surface for the contested reading and
+/// FIX-CK-21 closes it for the census, rejudged, split,
+/// pattern, and set review renderings. A field holding a
+/// line break, the break standing as the newline or the
+/// carriage return the loaders name, prints as the empty
+/// field, the rendering the contested reading already
+/// gives a label that stands for no printable string
+/// through its reading function, so no field a rendering
+/// is handed can split a line or mint a structural line.
+/// This helper is the one home of the rule for every
+/// reading, and no second fencing form stands.
 fn one_line_field(field: &str) -> &str {
     if field.contains('\n') || field.contains('\r') {
         ""
@@ -277,6 +321,70 @@ pub fn render_contested(reading: &Contested) -> String {
     lines.join("\n") + "\n"
 }
 
+/// Render a malformed pattern file with its defects named.
+pub fn render_pattern_defects(defects: &[String]) -> String {
+    render_defects_headed("Pattern", defects)
+}
+
+/// Render a pattern reading under CK-20.
+///
+/// The reading states one section per pattern of CK-7 in
+/// the order CK-7 states them, naming every flag of the
+/// collection standing under that pattern in collection
+/// order, or the no flagged lines line where it holds
+/// none, and closes with the counts of the collection.
+/// The section counts print as the counts of the flags
+/// stated, and the closing counts print as the sums over
+/// the sections stated, in the relations CK-20 states
+/// for them, and every field prints under the one line
+/// rule, so the rendering holds both rules for any
+/// reading it is handed, under FIX-CK-21. The same
+/// collection always renders byte identical.
+pub fn render_pattern(reading: &PatternReading) -> String {
+    let mut lines = vec!["Pattern".to_string()];
+    for section in &reading.sections {
+        lines.push(String::new());
+        lines.push(format!("Pattern, {}", one_line_field(&section.pattern)));
+        if section.flags.is_empty() {
+            lines.push("No flagged lines".to_string());
+        } else {
+            for flag in &section.flags {
+                lines.push(format!(
+                    "{}, line {}, set {}",
+                    one_line_field(&flag.file),
+                    flag.line,
+                    one_line_field(&flag.set_label)
+                ));
+            }
+        }
+        lines.push(format!("Flags read, {}", section.flags.len()));
+        lines.push(format!(
+            "Contested, {}",
+            section.flags.iter().filter(|flag| flag.contested).count()
+        ));
+    }
+    lines.push(String::new());
+    lines.push(format!("Sets read, {}", reading.sets_read));
+    lines.push(format!(
+        "Flags read, {}",
+        reading
+            .sections
+            .iter()
+            .map(|section| section.flags.len())
+            .sum::<usize>()
+    ));
+    lines.push(format!(
+        "Contested flags, {}",
+        reading
+            .sections
+            .iter()
+            .flat_map(|section| section.flags.iter())
+            .filter(|flag| flag.contested)
+            .count()
+    ));
+    lines.join("\n") + "\n"
+}
+
 /// Push the three judged lines onto a rendering.
 ///
 /// The forms are stated once here and shared by the set
@@ -323,23 +431,59 @@ fn push_tally(lines: &mut Vec<String>, tally: &Tally) {
     }
 }
 
+/// Sum the tallies of the set blocks of a census into the
+/// tally of its total block.
+///
+/// CK-11 states the total block as every count of the set
+/// blocks summed over the collection, so the rendering
+/// states the total in that relation itself, under
+/// FIX-CK-21, and no handed total prints. The judged
+/// lines stand in the total when a verdict stands in any
+/// set block, the one case the none recorded line of the
+/// total turns on.
+fn summed_tally(sets: &[CensusSet]) -> Tally {
+    let mut total = Tally::default();
+    for set in sets {
+        let tally = &set.tally;
+        total.files += tally.files;
+        total.judgements += tally.judgements;
+        for index in 0..tally.shapes.len() {
+            total.shapes[index] += tally.shapes[index];
+        }
+        total.borderline += tally.borderline;
+        for index in 0..tally.patterns.len() {
+            total.patterns[index] += tally.patterns[index];
+        }
+        total.verdicts_stand = total.verdicts_stand || tally.verdicts_stand;
+        total.stickler += tally.stickler;
+        total.clean += tally.clean;
+        total.unjudged += tally.unjudged;
+        total.contested += tally.contested;
+    }
+    total
+}
+
 /// Render a census reading under CK-11.
 ///
 /// The reading states each set of the collection in its own
 /// block in the order the collection states them, and a total
-/// block after the last set. The same census always renders
+/// block after the last set. The total block prints as the
+/// sums over the set blocks stated, in the relation CK-11
+/// states for it, and every label prints under the one line
+/// rule, so the rendering holds both rules for any census it
+/// is handed, under FIX-CK-21. The same census always renders
 /// byte identical.
 pub fn render_census(census: &Census) -> String {
     let mut lines = vec!["Census".to_string(), format!("Sets, {}", census.sets.len())];
     for set in &census.sets {
         lines.push(String::new());
-        lines.push(format!("Set, {}", set.label));
+        lines.push(format!("Set, {}", one_line_field(&set.label)));
         push_tally(&mut lines, &set.tally);
     }
     lines.push(String::new());
     lines.push("Total".to_string());
     lines.push(format!("Sets, {}", census.sets.len()));
-    push_tally(&mut lines, &census.total);
+    push_tally(&mut lines, &summed_tally(&census.sets));
     lines.join("\n") + "\n"
 }
 
@@ -349,7 +493,11 @@ pub fn render_census(census: &Census) -> String {
 /// diff raised and its borderline blocks under CK-8. When a
 /// flagged line is contested under CK-9 a contested section
 /// stands before the summary and the summary counts the
-/// contested lines. The same results always render byte
+/// contested lines. Every count of the rendering is computed
+/// over the results it is handed, and the file names and flag
+/// patterns print under the one line rule, so the rendering
+/// holds the rule for any results it is handed, under
+/// FIX-CK-21. The same results always render byte
 /// identical, and results holding no flags render exactly as
 /// judgement only results render.
 pub fn render_set_review(results: &[FileResult]) -> String {
@@ -375,7 +523,7 @@ pub fn render_set_review(results: &[FileResult]) -> String {
         let judgements: &Judgements = &result.judgements;
         let blocks = &result.blocks;
         lines.push(String::new());
-        lines.push(format!("File, {name}"));
+        lines.push(format!("File, {}", one_line_field(name)));
         if judgements.is_empty() && blocks.is_empty() {
             lines.push("Clean".to_string());
             continue;
@@ -412,7 +560,11 @@ pub fn render_set_review(results: &[FileResult]) -> String {
                 contested.push((name, index + 1, flag, entries));
             }
             lines.push(String::new());
-            lines.push(format!("Borderline {}, {}", index + 1, flag.pattern));
+            lines.push(format!(
+                "Borderline {}, {}",
+                index + 1,
+                one_line_field(&flag.pattern)
+            ));
             lines.push(format!("Line, {}", flag.content));
             lines.push(format!("Shape reading, {}", flag.reading));
             for entry in entries {
@@ -433,8 +585,11 @@ pub fn render_set_review(results: &[FileResult]) -> String {
         lines.push("Contested lines".to_string());
         for (name, index, flag, entries) in &contested {
             lines.push(String::new());
-            lines.push(format!("File, {name}"));
-            lines.push(format!("Borderline {index}, {}", flag.pattern));
+            lines.push(format!("File, {}", one_line_field(name)));
+            lines.push(format!(
+                "Borderline {index}, {}",
+                one_line_field(&flag.pattern)
+            ));
             lines.push(format!("Line, {}", flag.content));
             for entry in *entries {
                 lines.push(format!(
@@ -470,7 +625,7 @@ pub fn render_set_review(results: &[FileResult]) -> String {
         let mut ordered = worst.clone();
         ordered.sort_by(|left, right| right.1.cmp(&left.1).then_with(|| left.0.cmp(right.0)));
         for (name, count) in ordered {
-            lines.push(format!("Worst, {name}, {count}"));
+            lines.push(format!("Worst, {}, {count}", one_line_field(name)));
         }
     }
     lines.join("\n") + "\n"

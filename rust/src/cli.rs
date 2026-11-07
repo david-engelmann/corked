@@ -1,5 +1,5 @@
-//! The stickler command line. Seven commands, check, render,
-//! review, census, rejudged, split, and contested.
+//! The stickler command line. Eight commands, check, render,
+//! review, census, rejudged, split, contested, and pattern.
 //!
 //! The surface stands as two functions over two readings of
 //! the arguments. The binary entry, run below, collects the
@@ -21,11 +21,13 @@ use crate::changeset::{load_changeset, review_changeset};
 use crate::checker::check_diff_text;
 use crate::contested::{contested_reading_of, load_contested};
 use crate::json::{self, JString, JsonValue, ParseError};
+use crate::pattern::{load_pattern, pattern_reading_of};
 use crate::rejudged::{load_rejudged, rejudged_of};
 use crate::render::{
     render_census, render_census_defects, render_contested, render_contested_defects,
-    render_defects, render_defects_units, render_rejudged, render_rejudged_defects, render_review,
-    render_set_defects, render_set_review, render_split, render_split_defects,
+    render_defects, render_defects_units, render_pattern, render_pattern_defects, render_rejudged,
+    render_rejudged_defects, render_review, render_set_defects, render_set_review, render_split,
+    render_split_defects,
 };
 use crate::review::verdict_for;
 use crate::split::{load_split, split_of};
@@ -40,7 +42,8 @@ const USAGE: &str = "Usage, stickler check DIFF_FILE\n\
                      Usage, stickler census CENSUS_JSON\n\
                      Usage, stickler rejudged REJUDGED_JSON\n\
                      Usage, stickler split SPLIT_JSON\n\
-                     Usage, stickler contested CONTESTED_JSON\n";
+                     Usage, stickler contested CONTESTED_JSON\n\
+                     Usage, stickler pattern PATTERN_JSON\n";
 
 /// The outcome of one command line run, holding the exit code
 /// and the text for each of the two output streams.
@@ -366,6 +369,34 @@ fn contested_command(path: &JString) -> ByteOutcome {
     text_outcome(0, render_contested(&contested_reading_of(&value)))
 }
 
+fn pattern_command(path: &JString) -> ByteOutcome {
+    let text = match read_text(path) {
+        Err(()) => {
+            return text_outcome(
+                2,
+                render_pattern_defects(&["the pattern file could not be read".to_string()]),
+            );
+        }
+        Ok(text) => text,
+    };
+    let value = match json::parse(&text) {
+        Err(_) => {
+            return text_outcome(
+                2,
+                render_pattern_defects(&[
+                    "the file does not hold a JSON pattern collection".to_string()
+                ]),
+            );
+        }
+        Ok(value) => value,
+    };
+    let defects = load_pattern(&value);
+    if !defects.is_empty() {
+        return text_outcome(2, render_pattern_defects(&defects));
+    }
+    text_outcome(0, render_pattern(&pattern_reading_of(&value)))
+}
+
 /// Run the command line over code unit arguments and return
 /// the outcome as raw bytes.
 pub fn cli_main_units(args: &[JString]) -> ByteOutcome {
@@ -390,6 +421,9 @@ pub fn cli_main_units(args: &[JString]) -> ByteOutcome {
         }
         if args[0].equals("contested") {
             return contested_command(&args[1]);
+        }
+        if args[0].equals("pattern") {
+            return pattern_command(&args[1]);
         }
     }
     ByteOutcome {
