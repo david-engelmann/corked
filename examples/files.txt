@@ -1,0 +1,27 @@
+Files
+
+File, ledger.py
+line 6, near placeholder name, set constructed round 4 example
+line 7, near placeholder name, set constructed round 4 example
+line 6, shared member default, set constructed round 10 example
+line 9, broad handler, set constructed round 10 example
+Flags read, 4
+Contested, 2
+
+File, cache.py
+line 7, shared member default, set constructed round 4 example
+line 10, broad handler, set constructed round 4 example
+line 15, near placeholder name, set constructed round 4 example
+line 19, near placeholder name, set constructed round 4 example
+Flags read, 4
+Contested, 1
+
+File, tidy.py
+line 6, near placeholder name, set constructed round 10 example
+Flags read, 1
+Contested, 0
+
+Sets read, 2
+Files read, 3
+Flags read, 9
+Contested flags, 3

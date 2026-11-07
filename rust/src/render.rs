@@ -5,6 +5,7 @@ use crate::census::{Census, CensusSet, Tally};
 use crate::changeset::{FileResult, Judgements};
 use crate::checker::{BORDERLINE_PATTERNS, SHAPES};
 use crate::contested::Contested;
+use crate::files::FilesReading;
 use crate::json::{JString, JsonValue};
 use crate::pattern::PatternReading;
 use crate::rejudged::Rejudged;
@@ -69,6 +70,15 @@ pub fn render_defects(label: &str, defects: &[String]) -> String {
 
 /// Render a review. The same review always renders byte
 /// identical.
+///
+/// The objection text fields print under the one line
+/// rule through the one helper, so a field holding a
+/// line break prints as the empty field and no forged
+/// verdict line stands in the rendering, under
+/// FIX-CK-22. The label already stands under the rule
+/// through the reading of it in label_for, the verdict
+/// is one word of the closed vocabulary, and the
+/// objections count is a number this rendering computes.
 pub fn render_review(review: &JsonValue) -> String {
     let defects = validate_review(review);
     let label = label_for(review);
@@ -92,11 +102,20 @@ pub fn render_review(review: &JsonValue) -> String {
             lines.push(format!(
                 "Objection {}, {}",
                 index + 1,
-                field_text(objection, "category")
+                one_line_field(&field_text(objection, "category"))
             ));
-            lines.push(format!("Flaw, {}", field_text(objection, "flaw")));
-            lines.push(format!("Standard, {}", field_text(objection, "standard")));
-            lines.push(format!("Rewrite, {}", field_text(objection, "rewrite")));
+            lines.push(format!(
+                "Flaw, {}",
+                one_line_field(&field_text(objection, "flaw"))
+            ));
+            lines.push(format!(
+                "Standard, {}",
+                one_line_field(&field_text(objection, "standard"))
+            ));
+            lines.push(format!(
+                "Rewrite, {}",
+                one_line_field(&field_text(objection, "rewrite"))
+            ));
         }
     }
     lines.join("\n") + "\n"
@@ -245,9 +264,11 @@ pub fn render_contested_defects(defects: &[String]) -> String {
 
 /// Read a field the renderings print under the one line
 /// rule of CK-18, as FIX-CK-20 closes that rule at the
-/// library surface for the contested reading and
-/// FIX-CK-21 closes it for the census, rejudged, split,
-/// pattern, and set review renderings. A field holding a
+/// library surface for the contested reading, FIX-CK-21
+/// closes it for the census, rejudged, split, pattern,
+/// and set review renderings, and FIX-CK-22 closes it
+/// for the single review rendering and the file reading.
+/// A field holding a
 /// line break, the break standing as the newline or the
 /// carriage return the loaders name, prints as the empty
 /// field, the rendering the contested reading already
@@ -365,6 +386,67 @@ pub fn render_pattern(reading: &PatternReading) -> String {
     }
     lines.push(String::new());
     lines.push(format!("Sets read, {}", reading.sets_read));
+    lines.push(format!(
+        "Flags read, {}",
+        reading
+            .sections
+            .iter()
+            .map(|section| section.flags.len())
+            .sum::<usize>()
+    ));
+    lines.push(format!(
+        "Contested flags, {}",
+        reading
+            .sections
+            .iter()
+            .flat_map(|section| section.flags.iter())
+            .filter(|flag| flag.contested)
+            .count()
+    ));
+    lines.join("\n") + "\n"
+}
+
+/// Render a malformed files file with its defects named.
+pub fn render_files_defects(defects: &[String]) -> String {
+    render_defects_headed("Files", defects)
+}
+
+/// Render a file reading under CK-22.
+///
+/// The reading states one section per file standing in
+/// the collection in first appearance order across the
+/// collection, naming every flag of the collection
+/// standing on that file in collection order, and closes
+/// with the counts of the collection. The section counts
+/// print as the counts of the flags stated, and the
+/// closing counts print as the sums over the sections
+/// stated, in the relations CK-22 states for them, and
+/// every field prints under the one line rule, so the
+/// rendering holds both rules for any reading it is
+/// handed, under FIX-CK-22. The same collection always
+/// renders byte identical.
+pub fn render_files(reading: &FilesReading) -> String {
+    let mut lines = vec!["Files".to_string()];
+    for section in &reading.sections {
+        lines.push(String::new());
+        lines.push(format!("File, {}", one_line_field(&section.file)));
+        for flag in &section.flags {
+            lines.push(format!(
+                "line {}, {}, set {}",
+                flag.line,
+                one_line_field(&flag.pattern),
+                one_line_field(&flag.set_label)
+            ));
+        }
+        lines.push(format!("Flags read, {}", section.flags.len()));
+        lines.push(format!(
+            "Contested, {}",
+            section.flags.iter().filter(|flag| flag.contested).count()
+        ));
+    }
+    lines.push(String::new());
+    lines.push(format!("Sets read, {}", reading.sets_read));
+    lines.push(format!("Files read, {}", reading.sections.len()));
     lines.push(format!(
         "Flags read, {}",
         reading

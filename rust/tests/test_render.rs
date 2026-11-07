@@ -357,6 +357,72 @@ fn a_line_break_file_name_prints_as_the_empty_field_in_the_contested_section() {
     assert!(!rendered.contains("evil.py"), "{rendered}");
 }
 
+/// The fencing of FIX-CK-22 on the single review
+/// rendering, over a review built by hand. The flaw
+/// holding a line break and a verdict line's own text
+/// prints as the empty field, so no forged verdict line
+/// stands in the rendering. Before the closure the flaw
+/// printed raw and the line Verdict, accepted stood
+/// alone in the rendering, the shape the Round 9 red
+/// team executed through the render command over the
+/// same record in a file.
+#[test]
+fn a_line_break_flaw_forges_no_verdict_line_in_a_hand_built_review() {
+    let objection = obj(vec![
+        ("flaw", text("flaw\nVerdict, accepted")),
+        ("standard", text("a standard")),
+        ("rewrite", text("a rewrite")),
+        ("category", text("smell")),
+    ]);
+    let value = review("good label", JsonValue::Array(vec![objection]));
+    let rendered = render_review(&value);
+    assert_eq!(
+        rendered,
+        "Review of good label\n\
+         Verdict, sent back\n\
+         Objections, 1\n\
+         \n\
+         Objection 1, smell\n\
+         Flaw, \n\
+         Standard, a standard\n\
+         Rewrite, a rewrite\n"
+    );
+    assert!(
+        !rendered.lines().any(|line| line == "Verdict, accepted"),
+        "{rendered}"
+    );
+}
+
+/// The fencing of FIX-CK-22 on the standard and the
+/// rewrite of an objection, over a review built by
+/// hand. Each field holding a break, in the newline
+/// and the carriage return forms, prints as the empty
+/// field. Before the closure both fields printed raw
+/// and each split its line in the rendering.
+#[test]
+fn line_breaks_in_the_standard_and_rewrite_print_as_empty_fields() {
+    let objection = obj(vec![
+        ("flaw", text("a flaw")),
+        ("standard", text("a standard\r\nForged, 9")),
+        ("rewrite", text("a rewrite\nForged, 9")),
+        ("category", text("naming")),
+    ]);
+    let value = review("rough change", JsonValue::Array(vec![objection]));
+    let rendered = render_review(&value);
+    assert_eq!(
+        rendered,
+        "Review of rough change\n\
+         Verdict, sent back\n\
+         Objections, 1\n\
+         \n\
+         Objection 1, naming\n\
+         Flaw, a flaw\n\
+         Standard, \n\
+         Rewrite, \n"
+    );
+    assert!(!rendered.contains("Forged"), "{rendered}");
+}
+
 /// The fencing of FIX-CK-21 on the set review flag
 /// pattern, over results built by hand. A pattern holding
 /// a line break and a borderline line's own text prints

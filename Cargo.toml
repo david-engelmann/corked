@@ -2,6 +2,7 @@
 name = "stickler"
 version = "0.1.0"
 edition = "2021"
+description = "Stickler is a command line tool that reviews code against named rules, checks a diff with a built in checker, and prints readings over verdicts that decision model routes recorded while judging a change set against those rules."
 
 [lib]
 name = "stickler"
@@ -42,6 +43,10 @@ path = "rust/tests/test_contested.rs"
 [[test]]
 name = "test_contested_reading"
 path = "rust/tests/test_contested_reading.rs"
+
+[[test]]
+name = "test_files_reading"
+path = "rust/tests/test_files_reading.rs"
 
 [[test]]
 name = "test_json"
