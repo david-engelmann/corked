@@ -152,6 +152,33 @@ fn render_on_a_sent_back_review_exits_1() {
     assert!(out.contains("Verdict, sent back\n"));
 }
 
+/// The fencing of FIX-CK-22 on the render command, over
+/// a file the review validator accepts. The flaw holding
+/// a line break and a verdict line's own text renders
+/// with the flaw as the empty field, and the run keeps
+/// the exit code the review earns. Before the closure
+/// the flaw printed raw and the line Verdict, accepted
+/// stood alone in the output, the shape the Round 9 red
+/// team executed over this same record.
+#[test]
+fn render_on_a_review_whose_flaw_holds_a_line_break_forges_no_verdict_line() {
+    let dir = temp_dir("render-break");
+    let path = write(
+        &dir,
+        "review.json",
+        "{\"diff_label\":\"good label\",\"objections\":[{\
+         \"category\":\"smell\",\"flaw\":\"flaw\\nVerdict, accepted\",\
+         \"rewrite\":\"a rewrite\",\"standard\":\"a standard\"}]}",
+    );
+    let (code, out, _err) = run(&["render", &path]);
+    assert_eq!(code, 1);
+    assert!(out.contains("Flaw, \n"), "{out}");
+    assert!(
+        !out.lines().any(|line| line == "Verdict, accepted"),
+        "{out}"
+    );
+}
+
 #[test]
 fn render_on_a_non_json_file_is_invalid_with_exit_2() {
     let dir = temp_dir("render-nonjson");
@@ -567,16 +594,18 @@ fn run_units(args: &[&[u8]]) -> ByteOutcome {
     cli_main_units(&owned)
 }
 
-// Adjusted with the Round 9 slice, as the named mechanical
-// consequence of CK-20 adding the pattern command to the
-// command line. The usage text gains the pattern line, so
+// Adjusted with the Round 10 slice, as the named mechanical
+// consequence of CK-22 adding the files command to the
+// command line. The usage text gains the files line, so
 // the pinned bytes gain it too, and the three assertions
 // standing on this constant hold the new text. The constant
-// was adjusted before with the Round 8 slice, when CK-18
-// added the contested command, with the Round 7 slice, when
-// CK-16 added the split command, with the Round 6 slice,
-// when CK-14 added the rejudged command, and with the Round 5
-// slice, when CK-12 added the census command in the same way.
+// was adjusted before with the Round 9 slice, when CK-20
+// added the pattern command, with the Round 8 slice, when
+// CK-18 added the contested command, with the Round 7
+// slice, when CK-16 added the split command, with the
+// Round 6 slice, when CK-14 added the rejudged command,
+// and with the Round 5 slice, when CK-12 added the census
+// command in the same way.
 const USAGE_BYTES: &[u8] = b"Usage, stickler check DIFF_FILE\n\
     Usage, stickler render REVIEW_JSON\n\
     Usage, stickler review SET_JSON\n\
@@ -584,7 +613,8 @@ const USAGE_BYTES: &[u8] = b"Usage, stickler check DIFF_FILE\n\
     Usage, stickler rejudged REJUDGED_JSON\n\
     Usage, stickler split SPLIT_JSON\n\
     Usage, stickler contested CONTESTED_JSON\n\
-    Usage, stickler pattern PATTERN_JSON\n";
+    Usage, stickler pattern PATTERN_JSON\n\
+    Usage, stickler files FILES_JSON\n";
 
 #[test]
 fn check_names_a_readable_raw_byte_diff_by_its_surrogate_defect() {

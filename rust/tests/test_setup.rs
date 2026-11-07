@@ -110,8 +110,13 @@ fn readme_reports_the_round_4_standing() {
     // mechanical consequence of slice 10 standing in
     // review, so the count stood at one while Round 9
     // was built, until the Round 9 closure landed slice
-    // 10 and the count returned to zero.
-    assert_eq!(text.matches("built and in review").count(), 0);
+    // 10 and the count returned to zero. Adjusted again
+    // with the Round 10 slice, as the named mechanical
+    // consequence of slice 11 standing in review, so the
+    // count stands at one while Round 10 is built, until
+    // the Round 10 closure lands slice 11 and the count
+    // returns to zero.
+    assert_eq!(text.matches("built and in review").count(), 1);
 }
 
 #[test]
@@ -212,6 +217,29 @@ fn readme_reports_the_round_9_standing() {
         command beside check, render, review, census, rejudged, split, \
         and contested, and the library fencing closure over the census, \
         rejudged, split, and set review renderings, with the suite \
+        running offline on the recorded verdicts.";
+    assert!(text.lines().any(|line| line == slice_line));
+    assert!(text.contains("Closed perfection rounds, 9 of 100"));
+}
+
+#[test]
+fn readme_reports_the_round_10_standing() {
+    let text = read("README.md");
+    let standing = "- Contract, CK-21 and CK-22 stated. They stand in full form in \
+        CONTRACT.md, and Round 10 stands open on slice 11 in review.";
+    assert!(text.lines().any(|line| line == standing));
+    let slice_line = "- Slice 11 is built and in review. It carries the \
+        file reading over a recorded collection of change sets, one \
+        section per file in first appearance order across the \
+        collection, naming each flag standing on that file with line, \
+        pattern, and the set it stands in, with per file flags read \
+        and contested counts and closing counts over the whole \
+        collection, with the constructed files example under examples \
+        standing over two constructed sets sharing one file, and the \
+        files command beside check, render, review, census, rejudged, \
+        split, contested, and pattern, and the review rendering \
+        fencing closure over the single review rendering, and the \
+        README brought to the fleet README standard, with the suite \
         running offline on the recorded verdicts.";
     assert!(text.lines().any(|line| line == slice_line));
     assert!(text.contains("Closed perfection rounds, 9 of 100"));

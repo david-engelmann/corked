@@ -10,6 +10,7 @@ pub mod changeset;
 pub mod checker;
 pub mod cli;
 pub mod contested;
+pub mod files;
 pub mod json;
 pub mod pattern;
 pub mod pycompat;
