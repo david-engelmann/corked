@@ -24,7 +24,7 @@ fn agents_carries_the_canonical_marker() {
 #[test]
 fn readme_states_the_closed_round_count() {
     let text = read("README.md");
-    assert!(text.contains("Closed perfection rounds, 8 of 100"));
+    assert!(text.contains("Closed perfection rounds, 9 of 100"));
 }
 
 #[test]
@@ -108,9 +108,10 @@ fn readme_reports_the_round_4_standing() {
     // closure landed slice 9 and the count returned to zero.
     // Adjusted again with the Round 9 slice, as the named
     // mechanical consequence of slice 10 standing in
-    // review, so the count stands at one while Round 9
-    // is built.
-    assert_eq!(text.matches("built and in review").count(), 1);
+    // review, so the count stood at one while Round 9
+    // was built, until the Round 9 closure landed slice
+    // 10 and the count returned to zero.
+    assert_eq!(text.matches("built and in review").count(), 0);
 }
 
 #[test]
@@ -128,7 +129,7 @@ fn readme_reports_the_round_5_standing() {
         example named as constructed, with the suite running offline \
         on the recorded and constructed sets.";
     assert!(text.lines().any(|line| line == slice_line));
-    assert!(text.contains("Closed perfection rounds, 8 of 100"));
+    assert!(text.contains("Closed perfection rounds, 9 of 100"));
 }
 
 #[test]
@@ -147,7 +148,7 @@ fn readme_reports_the_round_6_standing() {
         and census, with the suite running offline on the recorded \
         envelopes and sets.";
     assert!(text.lines().any(|line| line == slice_line));
-    assert!(text.contains("Closed perfection rounds, 8 of 100"));
+    assert!(text.contains("Closed perfection rounds, 9 of 100"));
 }
 
 #[test]
@@ -165,7 +166,7 @@ fn readme_reports_the_round_7_standing() {
         beside check, render, review, census, and rejudged, with the \
         suite running offline on the recorded verdicts.";
     assert!(text.lines().any(|line| line == slice_line));
-    assert!(text.contains("Closed perfection rounds, 8 of 100"));
+    assert!(text.contains("Closed perfection rounds, 9 of 100"));
 }
 
 #[test]
@@ -187,16 +188,20 @@ fn readme_reports_the_round_8_standing() {
         review, census, rejudged, and split, with the suite running \
         offline on the recorded verdicts.";
     assert!(text.lines().any(|line| line == slice_line));
-    assert!(text.contains("Closed perfection rounds, 8 of 100"));
+    assert!(text.contains("Closed perfection rounds, 9 of 100"));
 }
 
 #[test]
 fn readme_reports_the_round_9_standing() {
     let text = read("README.md");
-    let standing = "- Contract, CK-19 and CK-20 stated. They stand in full form in \
-        CONTRACT.md, and Round 9 stands open on slice 10 in review.";
+    let standing = "- Contract, CK-19 and CK-20 met. They stand in full form in \
+        CONTRACT.md with the FIX-CK-21 fencing closure, and Round 9 \
+        closed on the merged slice 10 after three reviews approving \
+        with no findings, with the red team's one observation on the \
+        single review rendering carried to Round 10 as a fencing \
+        component.";
     assert!(text.lines().any(|line| line == standing));
-    let slice_line = "- Slice 10 is built and in review. It carries the \
+    let slice_line = "- Slice 10 has landed. It carries the \
         pattern reading over a recorded collection of change sets, one \
         section per borderline pattern in the order the contract states them, \
         naming each flag of the collection standing under that pattern \
@@ -209,7 +214,7 @@ fn readme_reports_the_round_9_standing() {
         rejudged, split, and set review renderings, with the suite \
         running offline on the recorded verdicts.";
     assert!(text.lines().any(|line| line == slice_line));
-    assert!(text.contains("Closed perfection rounds, 8 of 100"));
+    assert!(text.contains("Closed perfection rounds, 9 of 100"));
 }
 
 #[test]
